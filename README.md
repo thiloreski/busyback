@@ -2,7 +2,7 @@
 
 Backup for busybox e.g. OpenWRT
 
-In root dir somme documentation
+In root dir some documentation
 
 In bin dir the scripts (busyback - the core, plus locate utility and status utility)
 
