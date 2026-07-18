@@ -1,0 +1,2 @@
+command="/root/.ssh/allowed_commands.sh 2> /root/.ssh/allowed_commands_`/bin/date +\%Y-\%m-\%d_\%H-\%M-\%S`_stderr.log",no-port-forwarding,no-X11-forwarding,no-agent-forwarding ssh-ed25519 < public key of root on busyback server goes here> root@<my_OpenWRT_Router>
+

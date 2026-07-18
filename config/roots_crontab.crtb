@@ -1,0 +1,5 @@
+#all cronjob scripts in /mnt/OpenWRT_vaults/global_manage/cronjobs !!!!!
+
+0 5 * * * (echo == start $(date) ==; ( block info | grep OpenWRT_vaults ) && /mnt/OpenWRT_vaults/global_manage/cronjobs/busyback_cronjob.sh ; echo == end $(date) ==) >> /mnt/OpenWRT_vaults/global_manage/logs/cron_busyback_core_$(date +\%Y-\%m-\%d_\%H-\%M-\%S).log 2>&1
+30 * * * * (echo == start $(date) ==; ( block info | grep OpenWRT_vaults ) && /mnt/OpenWRT_vaults/global_manage/cronjobs/hourly_cronjob.sh ; echo == end $(date) ==) >> /mnt/OpenWRT_vaults/global_manage/logs/cron_busyback_hourly_$(date +\%Y-\%m-\%d).log 2>&1
+

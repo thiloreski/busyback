@@ -1,0 +1,73 @@
+#!/bin/sh
+
+# busyback-locate - Find unique historical versions of a file using flexible match
+CONFIG_DIR="/etc/busyback"
+MASTER_CONF="$CONFIG_DIR/master.conf"
+
+if [ -z "$1" ] || [ -z "$2" ]; then
+    echo "Usage: $(basename "$0") <vault_name> <filename_pattern>"
+    echo "Example: $(basename "$0") system_router wireless"
+    exit 1
+fi
+
+VAULT_NAME="$1"
+SEARCH_PATTERN="$2"
+
+# 1. Read master.conf to find the bank
+if [ ! -f "$MASTER_CONF" ]; then
+    echo "ERROR: Global configuration $MASTER_CONF not found!"
+    exit 1
+fi
+
+BANK=$(sed -n "s/^bank:[[:space:]]*//p" "$MASTER_CONF" | sed 's/[[:space:]]*$//')
+VAULT_PATH="$BANK/$VAULT_NAME"
+
+if [ ! -d "$VAULT_PATH" ]; then
+    echo "ERROR: Vault '$VAULT_NAME' does not exist in $BANK"
+    exit 1
+fi
+
+echo "Searching for unique versions matching: '$SEARCH_PATTERN'"
+echo "Vault: $VAULT_NAME"
+echo "----------------------------------------------------------------------"
+printf "%-17s | %-10s | %-10s | %s\n" "Backup-Snapshot" "Size/KB" "Type" "Relative Path"
+echo "----------------------------------------------------------------------"
+
+# Temporary storage to track inodes we have already printed
+# Using a temp file because variables in a piped while-loop are lost in POSIX sh
+# We use temporary files to track history across the loop layers
+SEEN_FILES=$(mktemp)
+SEEN_DIRS=$(mktemp)
+trap 'rm -f "$SEEN_FILES" "$SEEN_DIRS"' EXIT INT TERM
+
+# Loop through all snapshot directories sorted chronologically
+find "$VAULT_PATH" -mindepth 1 -maxdepth 1 -type d -name "[0-9][0-9][0-9][0-9]-*" | sort | while read -r IMG_DIR; do
+    SNAPSHOT=$(basename "$IMG_DIR")
+    INDEX_GZ="$IMG_DIR/index.gz"
+
+    [ -f "$INDEX_GZ" ] || continue
+
+    # zgrep for the pattern in the index file
+    zcat "$INDEX_GZ" | grep "$SEARCH_PATTERN" | while IFS='|' read -r INODE SIZE TYPE REL_PATH; do
+        CLEAN_PATH=$(echo "$REL_PATH" | sed 's|^\./||')
+
+        if [ "$TYPE" = "d" ]; then
+            # ... (folder magic) ...
+            DIR_FINGERPRINT="${CLEAN_PATH}_${SIZE}"
+            if ! grep -q "^${DIR_FINGERPRINT}$" "$SEEN_DIRS"; then
+                printf "%-17s | %-10s | %-10s | %s\n" "$SNAPSHOT" "4096" "directory" "$CLEAN_PATH"
+                echo "$DIR_FINGERPRINT" >> "$SEEN_DIRS"
+            fi
+        else
+            # ... (file magic) ...
+            DISPLAY_TYPE="file"
+            [ "$TYPE" = "l" ] && DISPLAY_TYPE="symlink"
+
+            if ! grep -q "^${INODE}$" "$SEEN_FILES"; then
+                printf "%-17s | %-10s | %-10s | %s\n" "$SNAPSHOT" "$SIZE" "$DISPLAY_TYPE" "$CLEAN_PATH"
+                echo "$INODE" >> "$SEEN_FILES"
+            fi
+        fi
+    done
+done
+
