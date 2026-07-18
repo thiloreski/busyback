@@ -1,13 +1,13 @@
-#Backup for busybox e.g. OpenWRT
+# Backup for busybox e.g. OpenWRT
 
-##Contents:
+## Contents:
  
-###In root dir some documentation
+### In root dir some documentation
 
-###In bin dir the scripts (busyback - the core, plus locate utility and status utility)
+### In bin dir the scripts (busyback - the core, plus locate utility and status utility)
 
-###In config dir config examples
+### In config dir config examples
 
-###In cornjobs dir crontab scripts
+### In cornjobs dir crontab scripts
 
-###In wrapper.... forced command wrapper
+### In wrapper.... forced command wrapper
