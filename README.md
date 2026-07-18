@@ -9,3 +9,5 @@ In bin dir the scripts (busyback - the core, plus locate utility and status util
 In config dir config examples
 
 In corntab dir crontab scripts
+
+In wrapper.... forced command wrapper
