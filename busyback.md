@@ -161,8 +161,9 @@ the local user footprint.
     \\@(etc\|home)\\´´´**
 
     **and all other commands wh**i**ch are allowed. **The script also
-    uses commad „exit“, an in the script there are twe more commnads
-    („ls /etc“ and „cat /etc/hosts“) allowed for testing purposes.**
+    uses **the **commad „exit“, an**d** in the script there are twe more
+    commnads („ls /etc“ and „cat /etc/hosts“) allowed for testing
+    purposes.**
 
 ### Setup
 
