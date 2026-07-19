@@ -89,11 +89,11 @@ To automate backups securely, setup passwordless authentication using the local 
 
 #### **Backup device**
 
-#### **M**ount **nd unlock your backup device. Busyback runs without that, but if you do not have a device, the backup ist stored in the disk space of the backup server, which space may be limitid. If you do not have an encrypted device, your backups will be plain. For testing puposes you can skip mount and unlock. To easy create and unlock a device under busybox see repo „crypto-manage“ in GitHub.**
+#### ****M******ount ******nd unlock your backup device. Busyback runs without that, but if you do not have a device, the backup ist stored in the disk space of the backup server, which space may be limitid. If you do not have an encrypted device, your backups will be plain. For testing puposes you can skip mount and unlock. To easy create and unlock a device under busybox see repo „crypto-manage“ in GitHub.****
 
 #### **Files**
 
-**Co**py **Copy **the whole structure of the repo into „/mnt/OpenWRT_vaults/manage“.**
+****Copy ******the whole structure of the repo into „/mnt/OpenWRT_vaults/manage“.****
 
 ##### **Main files:**
 
