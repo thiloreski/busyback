@@ -174,14 +174,15 @@ see repo „crypto-manage“ in GitHub
 c\) Copy the whole structure of the repo into
 „/mnt/OpenWRT_vaults/manage“
 
-copy the following files
+d\) copy the following files
 
-- *core*
+- **core* *(chmod to executeable)**
 
   **/mnt/OpenWRT_vaults/**global_manage/cd**bin/busyback to
   **/**usr/bin/**busyback** **
 
-- **what are the latest successful backups**
+- **what are the latest successful backups **(chmod to
+  exs**e**cuteable)**
 
   **/mnt/OpenWRT_vaults/**global_manag**e/**bin/**latest_busyback **t**o
   **/usr/bin/**latest_busyback**
@@ -191,21 +192,24 @@ copy the following files
   **/mnt/OpenWRT_vaults/global_manage/master.conf to
   /etc/busyback/master.conf**
 
-- **Roots crontab – **create or add**
+**e) **Roots crontab – **create or add**
 
-  *roots_crontab.crtb *
+- *roots_crontab.crtb *
 
-- **cronjbs stay in OpenWRT_vaults/global_manage**
+*d) other files*
+
+- **cronj**ob**s stay in OpenWRT_vaults/global_manage**
 
   - **busyback_cronjob.sh** **– **core **cronjob**
   - **hourly_cronjob.sh** **– **backup of the config and bin files to a
     save place**
 
-- **The configuration file defining client overrides.**
+- **The configuration file defining client overrides, **create one for
+  each client (see below)**
 
-- */mnt/OpenWRT_vaults/busyback-bank\>/\<vault\>/manage/busyback.conf*
+  */mnt/OpenWRT_vaults/busyback-bank\>/\<vault\>/manage/busyback.conf*
 
-- **On Clients: **W**rapper scrip**t** in root’s .ssh **
+- **On Clients: **W**rapper scrip**t** in root’s .ssh **(See below) **
 
   **allowed_commands.sh**
 
@@ -264,7 +268,7 @@ Bash
 
 *\# Example open routine (adjust names to your specific environment)*
 
-*cryptio-manage open backup_storage go *
+*crypto-manage open backup_storage go *
 
 ### 2. Binary Infrastructure Setup
 
@@ -294,8 +298,4 @@ entry.
 
   Bash
 
-  *crontab -e*
-
-  *\# Verify the backup wrapper triggers as expected:*
-
-  *\# 0 2 \* \* \* /usr/bin/busyback go *
+  *crontab -l*
