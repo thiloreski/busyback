@@ -165,16 +165,17 @@ the local user footprint.
     commnads („ls /etc“ and „cat /etc/hosts“) allowed for testing
     purposes.**
 
-    **and all other commands wh**i**ch are allowed. **The script also
-    uses **the **commad „exit“, an**d** in the script there are twe more
-    commnads („ls /etc“ and „cat /etc/hosts“) allowed for testing
-    purposes.**
+4.  **and all other commands which are allowed. The script also uses the
+    commad „exit“, and in the script there are twe m  
+    ore commnads („ls /etc“ and „cat /etc/hosts“) allowed for testing
+    purposes.  
+    **
 
 ### Setup
 
 **Create a mount point „/mnt/OpenWRT_vaults/“ busyback on the backup
 server. In what follows, all references to the name. You may choose a
-different one, but be aware of changes when reading further, in
+different one, but be aware of changes when reading **further, in
 particular in the conjobs. Be aware that in the cryptsetup config files
 character of device names are limited. e.g „\_“ is allowed, but „-“
 not.**
