@@ -130,17 +130,17 @@ Before executing the script, ensure the following tools are installed:
 To automate backups securely, setup passwordless authentication using
 the local user footprint.
 
-1\) Authorized Keys: Append the backup server's public key (e.g.,
+**1) Authorized Keys:** Append the backup server's public key (e.g.,
 */etc/dropbear/id_dropbear_backup.pub* or *id_rsa.pub*) to the target
 remote user's (i.e. root or admin user on Windows with cygwin )
 *authorized_keys* file.
 
-2\) Known Hosts: Add backup clients host key to the known hosts file of
-backup server’s root, best by once calling „ssh \<user\>@\<client\> -p
-\<port\>“ from command line and answering „yes“ – the host key is added,
-even if there is no loigin after that .
+**2) Known Hosts:** Add backup clients host key to the known hosts file
+of backup server’s root, best by once calling „ssh \<user\>@\<client\>
+-p \<port\>“ from command line and answering „yes“ – the host key is
+added, even if there is no loigin after that .
 
-3\) Forced Command Wrapper on clients: busyback may need to run with
+**3) Forced Command Wrapper on clients:** busyback may need to run with
 root rights, e.g. to backup a system folder or a set of folders
 belonging to several users. To prevent rogue root commands, use the
 forced command directive and prefix the target *authorized_keys* entry
@@ -151,71 +151,71 @@ with restricted execution blocks if required by security policies:
 +\\Y-\\m-\\d\_\\H-\\M-\\S\`\_stderr.log",no-port-forwarding,no-X11-forwarding,no-agent-forwarding
 ssh-ed25519 AAA…..*
 
-**in the script „allowed_commands.sh“ allow commands like**
+**in the script „****allowed_commands.sh****“ allow commands like**
 
 *rsync\\ --server\\ --sender\\
 -\*(\[vnklLH\])ogD?(t)p?(A)?(X)r?(x)?(x)e.iLfxCIvu\\ ?(--ignore-errors\\
 )?(--safe-links\\ )?(--numeric-ids\\ ).\\ \\@(etc\|home)\\*
 
 **and all other commands which are allowed. The script also uses the
-commad „exit“, and in the script there are twe more commnads („ls /etc“
-and „cat /etc/hosts“) allowed for testing purposes.**
+commad „****exit****“, and in the script there are twe more commnads
+(„ls /etc“ and „cat /etc/hosts“) allowed for testing purposes.**
 
 ### Setup
 
-1.  **Create a mount point „/mnt/OpenWRT_vaults/“ busyback on the backup
+1.  *Create a mount point „/mnt/OpenWRT_vaults/“ busyback on the backup
     server. In what follows, all references to the name. You may choose
     a different one, but be aware of changes when reading further, in
     particular in the conjobs. Be aware that in the cryptsetup config
     files character of device names are limited. e.g „\_“ is allowed,
-    but „-“ not.**
-2.  **Mount and unlock your backup device. Busyback runs without that,
+    but „-“ not.*
+2.  *Mount and unlock your backup device. Busyback runs without that,
     but if you do not have a device, the backup ist stored in the disk
     space of the backup server, which space may be limitid. If you do
     not have an encrypted device, your backups will be plain. For
     testing puposes you can skip mount and unlock. To easy create and
-    unlock a device under busybox see repo „crypto-manage“ in GitHub.**
-3.  **Copy the whole structure of the repo into
-    „/mnt/OpenWRT_vaults/manage“.**
+    unlock a device under busybox see repo „crypto-manage“ in GitHub.*
+3.  *Copy the whole structure of the repo into
+    „/mnt/OpenWRT_vaults/manage“.*
 
 #### **Main files:**
 
-1.  **core (chmod to executeable)**
+1.  *core (chmod to executeable)*
 
-    1.  **/mnt/OpenWRT_vaults/global_manage/cdbin/busyback to
-        /usr/bin/busyback**
+    1.  */mnt/OpenWRT_vaults/global_manage/cdbin/busyback to
+        /usr/bin/busyback*
 
-    **what are the latest successful backups (chmod to executeable)**
+1.  *what are the latest successful backups (chmod to executeable)*
 
-    1.  **/mnt/OpenWRT_vaults/global_manage/bin/latest_busyback to
-        /usr/bin/latest_busyback**
+    1.  */mnt/OpenWRT_vaults/global_manage/bin/latest_busyback to
+        /usr/bin/latest_busyback*
 
-    **Global defaults**
+2.  *Global defaults*
 
-    1.  **/mnt/OpenWRT_vaults/global_manage/master.conf to
-        /etc/busyback/master.conf**
+    1.  */mnt/OpenWRT_vaults/global_manage/master.conf to
+        /etc/busyback/master.conf*
 
-    **Roots crontab - create or add**
+3.  *Roots crontab - create or add*
 
-    1.  **roots_crontab.crtb**
+    1.  *roots_crontab.crtb*
 
-#### **O**ther files**
+#### **O**ther files:**
 
-1.  **cronjobs stay in OpenWRT_vaults/global_manage**
+1.  *cronjobs stay in OpenWRT_vaults/global_manage*
 
-    1.  **busyback_cronjob.sh - core cronjob**
+    1.  *busyback_cronjob.sh - core cronjob*
 
-        **hourly_cronjob.sh - backup of the config and bin files to a
-        save place**
+        *hourly_cronjob.sh - backup of the config and bin files to a
+        save place*
 
-    **The configuration file defining client overrides, create one for
-    each backup (see examples and more info below)**
+2.  *The configuration file defining client overrides, create one for
+    each backup (see examples and more info below)*
 
-    1.  **/mnt/OpenWRT_vaults/busyback-bank\>/\<vault\>/manage/busyback.conf**
+    1.  */mnt/OpenWRT_vaults/busyback-bank\>/\<vault\>/manage/busyback.conf*
 
-    **On Clients: Wrapper script in root’s .ssh(See below)**
+3.  *On Clients: Wrapper script in root’s .ssh(See below)*
 
-    1.  **allowed_commands.sh**
+    1.  *allowed_commands.sh*
 
 # Windows Integration Bridge
 
