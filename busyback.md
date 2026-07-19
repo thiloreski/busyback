@@ -179,15 +179,15 @@ d\) copy the following files
 - **core* *(chmod to executeable)**
 
   **/mnt/OpenWRT_vaults/**global_manage/cd**bin/busyback to
-  **/**usr/bin/**busyback** **
+  **/**usr/bin/**busyback**
 
-  **what are the latest successful backups **(chmod to
+- **what are the latest successful backups **(chmod to
   ex**e**cuteable)**
 
   **/mnt/OpenWRT_vaults/global_manag**e/**bin/**latest_busyback t**o
   **/usr/bin/**latest_busyback**
 
-  **Global defaults**
+- **Global defaults**
 
   **/mnt/OpenWRT_vaults/global_manage/master.conf to
   /etc/busyback/master.conf**
@@ -200,17 +200,16 @@ d\) copy the following files
 
 - **cronj**ob**s stay in OpenWRT_vaults/global_manage**
 
-  - **busyback_cronjob.sh** **– **core **cronjob**
+  - **busyback_cronjob.sh -** **core **cronjob**
+  - **hourly_cronjob.sh - **backup of the config and bin files to a save
+    place**
 
-    **hourly_cronjob.sh** **– **backup of the config and bin files to a
-    save place**
-
-  **The configuration file defining client overrides, **create one for
-  each **backuip **(see below)**
+- **The configuration file defining client overrides, **create one for
+  each **backup **(see below)**
 
   */mnt/OpenWRT_vaults/busyback-bank\>/\<vault\>/manage/busyback.conf*
 
-  **On Clients: **W**rapper scrip**t** in root’s .ssh **(See below) **
+- **On Clients: **W**rapper scrip**t **in root’s .ssh**(See below)**
 
   **allowed_commands.sh**
 
