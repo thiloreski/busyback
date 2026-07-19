@@ -130,39 +130,36 @@ Before executing the script, ensure the following tools are installed:
 To automate backups securely, setup passwordless authentication using
 the local user footprint.
 
-1.  **Authorized Keys:** Append the backup server's public key (e.g.,
-    */etc/dropbear/id_dropbear_backup.pub* or *id_rsa.pub*) to the
-    target remote user's (i.e. root or admin user on Windows with cygwin
-    ) *authorized_keys* file.
+**1) Authorized Keys:** Append the backup server's public key (e.g.,
+*/etc/dropbear/id_dropbear_backup.pub* or *id_rsa.pub*) to the target
+remote user's (i.e. root or admin user on Windows with cygwin )
+*authorized_keys* file.
 
-2.  **Known Hosts:** Add backup clients host key to the known hosts file
-    of backup server’s root, best by once calling „ssh
-    \<user\>@\<client\> -p \<port\>“ from command line and answering
-    „yes“ – the host key is added, even if there is no loigin after that
-    .
+**2) Known Hosts:** Add backup clients host key to the known hosts file
+of backup server’s root, best by once calling „ssh \<user\>@\<client\>
+-p \<port\>“ from command line and answering „yes“ – the host key is
+added, even if there is no loigin after that .
 
-3.  **Forced Command Wrapper on clients:** busyback may need to run with
-    root rights, e.g. to backup a system folder or a set of folders
-    belonging to several users. To prevent rogue root commands, use the
-    forced command directive and prefix the target *authorized_keys*
-    entry with restricted execution blocks if required by security
-    policies:
+**3) Forced Command Wrapper on clients:** busyback may need to run with
+root rights, e.g. to backup a system folder or a set of folders
+belonging to several users. To prevent rogue root commands, use the
+forced command directive and prefix the target *authorized_keys* entry
+with restricted execution blocks if required by security policies:
 
-    *command="/root/.ssh/allowed_commands.sh 2\>
-    /root/.ssh/allowed_commands\_\`/bin/date
-    +\\Y-\\m-\\d\_\\H-\\M-\\S\`\_stderr.log",no-port-forwarding,no-X11-forwarding,no-agent-forwarding
-    ssh-ed25519 AAA…..*
+*command="/root/.ssh/allowed_commands.sh 2\>
+/root/.ssh/allowed_commands\_\`/bin/date
++\\Y-\\m-\\d\_\\H-\\M-\\S\`\_stderr.log",no-port-forwarding,no-X11-forwarding,no-agent-forwarding
+ssh-ed25519 AAA…..*
 
-** in the script „allowed_commands.sh“ allow commands like**
+**in the script „allowed_commands.sh“ allow commands like**
 
-1.  *rsync\\ --server\\ --sender\\
-    -\*(\[vnklLH\])ogD?(t)p?(A)?(X)r?(x)?(x)e.iLfxCIvu\\
-    ?(--ignore-errors\\ )?(--safe-links\\ )?(--numeric-ids\\ ).\\
-    \\@(etc\|home)\\*
+*rsync\\ --server\\ --sender\\
+-\*(\[vnklLH\])ogD?(t)p?(A)?(X)r?(x)?(x)e.iLfxCIvu\\ ?(--ignore-errors\\
+)?(--safe-links\\ )?(--numeric-ids\\ ).\\ \\@(etc\|home)\\*
 
-> **and all other commands which are allowed. The script also uses the
-> commad „exit“, and in the script there are twe more commnads („ls
-> /etc“ and „cat /etc/hosts“) allowed for testing purposes.**
+**and all other commands which are allowed. The script also uses the
+commad „exit“, and in the script there are twe more commnads („ls /etc“
+and „cat /etc/hosts“) allowed for testing purposes.**
 
 ### Setup
 
