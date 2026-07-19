@@ -122,8 +122,8 @@ valid reference point for future runs.
 
 Before executing the script, ensure the following tools are installed:
 
-- *rsync*
-- *socat (only if WOL needed)*
+-   *rsync*
+-   *socat (only if WOL needed)*
 
 ### SSH Key Distribution
 
@@ -237,25 +237,25 @@ binaries will fail to read these files. To bypass this, the Windows
 target must execute an rsync client that is fully integrated with the
 native **Volume Shadow Copy Service (VSS)**.
 
-- **Client Path:** The target binary path used on Windows systems is:
-  *'c:/Program Files/True_Blade_Systems/tb-rsync-vss-64.exe'*
-- **Rsync Options:** The configuration must include flags matching the
-  technical capabilities of the VSS engine, prioritizing path
-  translation formatting compatible with shadow volumes (e.g.,
-  */cygdrive/c/* syntax mappings).
+-   **Client Path:** The target binary path used on Windows systems is:
+    *'c:/Program Files/True_Blade_Systems/tb-rsync-vss-64.exe'*
+-   **Rsync Options:** The configuration must include flags matching the
+    technical capabilities of the VSS engine, prioritizing path
+    translation formatting compatible with shadow volumes (e.g.,
+    */cygdrive/c/* syntax mappings).
 
 # Use Cases
 
-- **Heterogeneous Server Environments:** Backing up Linux headless
-  infrastructure alongside Windows desktop environments using unified
-  syntax rules.
-- **Non-Standard SSH Port Topologies:** Securing external edge
-  environments behind dynamic NAT mappings where clients expose
-  customized incoming ports instead of port *22*.
-- **Green-IT Powered Desktop Nodes:** Powering up targeted office
-  workstations on demand in the middle of the night via WoL, pulling a
-  full daily differential snapshot, and letting them return to sleep
-  states safely.
+-   **Heterogeneous Server Environments:** Backing up Linux headless
+    infrastructure alongside Windows desktop environments using unified
+    syntax rules.
+-   **Non-Standard SSH Port Topologies:** Securing external edge
+    environments behind dynamic NAT mappings where clients expose
+    customized incoming ports instead of port *22*.
+-   **Green-IT Powered Desktop Nodes:** Powering up targeted office
+    workstations on demand in the middle of the night via WoL, pulling a
+    full daily differential snapshot, and letting them return to sleep
+    states safely.
 
 # Operational Runbook (Post-Reboot Procedures)
 
