@@ -71,7 +71,7 @@ To automate backups securely, setup passwordless authentication using the local 
 
 **2) Known Hosts:** Add backup clients host key to the known hosts file of backup server’s root, best by once calling „ssh \<user\>@\<client\> -p \<port\>“ from command line and answering „yes“ – the host key is added, even if there is no loigin after that .
 
-**3) Forced Command Wrapper on clients:** busyback may need to run with root rights, e.g. to backup a system folder or a set of folders belonging to several users. To prevent rogue root commands, use the forced command directive and prefix the target *authorized_keys* entry with restricted execution blocks if required by security policies:
+**3) Forced Command Wrapper on clients:** busyback may need to run with root rights, e.g. to backup a system folder or a set of folders belonging to several users. To prevent rogue root comands, use the forced command directive and prefix the target *authorized_keys* entry with restricted execution blocks if required by security policies:
 
 command="/root/.ssh/allowed_commands.sh 2\> /root/.ssh/allowed_commands\_\`/bin/date +\\Y-\\m-\\d\_\\H-\\M-\\S\`\_stderr.log",no-port-forwarding,no-X11-forwarding,no-agent-forwarding ssh-ed25519 AAA…..
 
