@@ -81,10 +81,6 @@ rsync\\ --server\\ --sender\\ -\*(\[vnklLH\])ogD?(t)p?(A)?(X)r?(x)?(x)e.iLfxCIvu
 
 and all other commands which are allowed. The script also uses the commad „exit“, and in the script there are twe more commnads („ls /etc“ and „cat /etc/hosts“) allowed for testing purposes.
 
-command="/root/.ssh/allowed_commands.sh 2\> /root/.ssh/allowed_commands\_\`/bin/date +\\Y-\\m-\\d\_\\H-\\M-\\S\`\_stderr.log",no-port-forwarding,no-X11-forwarding,no-agent-forwarding ssh-ed25519 AAA…..
-
-**
-
 #### Mount point
 
 Create a mount point „/mnt/OpenWRT_vaults/“ busyback on the backup server. In what follows, all references to the name. You may choose a different one, but be aware of changes when reading further, in particular in the conjobs. Be aware that in the cryptsetup config files character of device names are limited. e.g „\_“ is allowed, but „-“ not..
