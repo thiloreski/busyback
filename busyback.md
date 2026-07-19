@@ -130,17 +130,17 @@ Before executing the script, ensure the following tools are installed:
 To automate backups securely, setup passwordless authentication using
 the local user footprint.
 
-**1) Authorized Keys:** Append the backup server's public key (e.g.,
+1\) Authorized Keys: Append the backup server's public key (e.g.,
 */etc/dropbear/id_dropbear_backup.pub* or *id_rsa.pub*) to the target
 remote user's (i.e. root or admin user on Windows with cygwin )
 *authorized_keys* file.
 
-**2) Known Hosts:** Add backup clients host key to the known hosts file
-of backup server’s root, best by once calling „ssh \<user\>@\<client\>
--p \<port\>“ from command line and answering „yes“ – the host key is
-added, even if there is no loigin after that .
+2\) Known Hosts: Add backup clients host key to the known hosts file of
+backup server’s root, best by once calling „ssh \<user\>@\<client\> -p
+\<port\>“ from command line and answering „yes“ – the host key is added,
+even if there is no loigin after that .
 
-**3) Forced Command Wrapper on clients:** busyback may need to run with
+3\) Forced Command Wrapper on clients: busyback may need to run with
 root rights, e.g. to backup a system folder or a set of folders
 belonging to several users. To prevent rogue root commands, use the
 forced command directive and prefix the target *authorized_keys* entry
