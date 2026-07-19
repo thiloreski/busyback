@@ -158,60 +158,61 @@ the local user footprint.
 
 ### Setup
 
-a\) Create a mount pint „/mnt/OpenWRT_vaults/“ busyback on the backup
-server. In what follows, all reference to the name. You may choose a
-different one, but be aware of changes when reading further. Be aware
-that in the cryptsetup config files character of device names are
-limited. e.g „\_“ is allowed, but „-“ not.
+1.  **Create a mount p**o**int „/mnt/OpenWRT_vaults/“ busyback on the
+    > backup server. In what follows, all reference**s** to the name.
+    > You may choose a different one, but be aware of changes when
+    > reading further, **in particular in the conjobs. **Be aware that
+    > in the cryptsetup config files character of device names are
+    > limited. e.g „\_“ is allowed, but „-“ not.**
 
-b\) Mount and unlock your backup device. Busyback runs without that, but
-if you do not have a device, the backup ist stored in the disk space of
-the backup server, which space may be limitid. If you do not have an
-encrypted devie, your backups will be plain. For testing puposes you can
-skip mount and unlock. To easy create and unlock a device under busyboc
-see repo „crypto-manage“ in GitHub
+2.  **Mount and unlock your backup device. Busyback runs without that,
+    > but if you do not have a device, the backup ist stored in the disk
+    > space of the backup server, which space may be limitid. If you do
+    > not have an encrypted devi**c**e, your backups will be plain. For
+    > testing puposes you can skip mount and unlock. To easy create and
+    > unlock a device under busybo**x** see repo „crypto-manage“ in
+    > GitHub.**
 
-c\) Copy the whole structure of the repo into
-„/mnt/OpenWRT_vaults/manage“
+3.  **Copy the whole structure of the repo into
+    > „/mnt/OpenWRT_vaults/manage“**
 
-d\) copy the following files
+4.  **copy the following files**
 
-- **core* *(chmod to executeable)**
+- - **core (chmod to executeable)**
 
-  **/mnt/OpenWRT_vaults/**global_manage/cd**bin/busyback to
-  **/**usr/bin/**busyback**
+    ****/mnt/OpenWRT_vaults/global_manage/cdbin/busyback**** to
+    ****/usr/bin/busyback****
 
-- **what are the latest successful backups **(chmod to
-  ex**e**cuteable)**
+  - **what are the latest successful backups (chmod to executeable)**
 
-  **/mnt/OpenWRT_vaults/global_manag**e/**bin/**latest_busyback t**o
-  **/usr/bin/**latest_busyback**
+    ****/mnt/OpenWRT_vaults/global_manage/bin/latest_busyback**** to
+    ****/usr/bin/latest_busyback****
 
-- **Global defaults**
+  - **Global defaults**
 
-  **/mnt/OpenWRT_vaults/global_manage/master.conf to
-  /etc/busyback/master.conf**
+    ****/mnt/OpenWRT_vaults/global_manage/master.conf**** to
+    ****/etc/busyback/master.conf****
 
-**e) **Roots crontab – **create or add**
+> **e) Roots crontab - create or add**
 
-- *roots_crontab.crtb *
+- - ****roots_crontab.crtb****
 
-*d) other files*
+> **d) other files**
 
-- **cronj**ob**s stay in OpenWRT_vaults/global_manage**
+- - **cronjobs stay in OpenWRT_vaults/global_manage**
 
-  - **busyback_cronjob.sh -** **core **cronjob**
-  - **hourly_cronjob.sh - **backup of the config and bin files to a save
-    place**
+    - ****busyback_cronjob.sh**** - core cronjob**
+    - ****hourly_cronjob.sh**** - backup of the config and bin files to
+      a save place**
 
-- **The configuration file defining client overrides, **create one for
-  each **backup **(see below)**
+  - **The configuration file defining client overrides, create one for
+    each backup (see **examples and more info **below)**
 
-  */mnt/OpenWRT_vaults/busyback-bank\>/\<vault\>/manage/busyback.conf*
+    ****/mnt/OpenWRT_vaults/busyback-bank\>/\<vault\>/manage/busyback.conf****
 
-- **On Clients: **W**rapper scrip**t **in root’s .ssh**(See below)**
+  - **On Clients: Wrapper script in root’s .ssh(See below)**
 
-  **allowed_commands.sh**
+    **allowed_commands.sh**
 
 # Windows Integration Bridge
 
@@ -270,32 +271,4 @@ Bash
 
 *crypto-manage open backup_storage go *
 
-### 2. Binary Infrastructure Setup
-
-Ensure that your management utility engines are mapped globally so paths
-resolve without error across administrative domains. Copy the latest
-utility binaries to your global system bin directory:
-
-Bash
-
-*cp /path/to/source/busyback /usr/bin/busyback*
-
-*cp /path/to/source/crypto-manage /usr/bin/crypto-manage*
-
-*chmod +x /usr/bin/busyback /usr/bin/crypto-manage*
-
-### 3. Cron Task Orchestration
-
-Your cron execution environment should be actively monitored. If the
-system defaults are cleared down on reboot, you need to restore the task
-entry.
-
-- Instead of editing raw files local to the node, fetch or re-initialize
-  your schedules through your centralized engine (**global manage
-  orchestration tool**).
-
-- To check or append manually if the automation is missing:
-
-  Bash
-
-  *crontab -l*
+### 
