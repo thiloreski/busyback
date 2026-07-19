@@ -163,61 +163,59 @@ and „cat /etc/hosts“) allowed for testing purposes.**
 
 ### Setup
 
-1.  *Create a mount point „/mnt/OpenWRT_vaults/“ busyback on the backup
+1.  **Create a mount point „/mnt/OpenWRT_vaults/“ busyback on the backup
     server. In what follows, all references to the name. You may choose
     a different one, but be aware of changes when reading further, in
     particular in the conjobs. Be aware that in the cryptsetup config
     files character of device names are limited. e.g „\_“ is allowed,
-    but „-“ not.*
-2.  *Mount and unlock your backup device. Busyback runs without that,
+    but „-“ not.**
+2.  **Mount and unlock your backup device. Busyback runs without that,
     but if you do not have a device, the backup ist stored in the disk
     space of the backup server, which space may be limitid. If you do
     not have an encrypted device, your backups will be plain. For
     testing puposes you can skip mount and unlock. To easy create and
-    unlock a device under busybox see repo „crypto-manage“ in GitHub.*
-3.  *Copy the whole structure of the repo into
-    „/mnt/OpenWRT_vaults/manage“.*
+    unlock a device under busybox see repo „crypto-manage“ in GitHub.**
+3.  **Copy the whole structure of the repo into
+    „/mnt/OpenWRT_vaults/manage“.**
 
 #### **Main files:**
 
-1.  *core (chmod to executeable)*
+1.  **core (chmod to executeable)**
 
-    1.  */mnt/OpenWRT_vaults/global_manage/cdbin/busyback to
-        /usr/bin/busyback*
+    1.  **/mnt/OpenWRT_vaults/global_manage/cdbin/busyback to
+        /usr/bin/busyback**
 
-**
+    **what are the latest successful backups (chmod to executeable)**
 
-1.  *what are the latest successful backups (chmod to executeable)*
+    1.  **/mnt/OpenWRT_vaults/global_manage/bin/latest_busyback to
+        /usr/bin/latest_busyback**
 
-    1.  */mnt/OpenWRT_vaults/global_manage/bin/latest_busyback to
-        /usr/bin/latest_busyback*
+    **Global defaults**
 
-2.  *Global defaults*
+    1.  **/mnt/OpenWRT_vaults/global_manage/master.conf to
+        /etc/busyback/master.conf**
 
-    1.  */mnt/OpenWRT_vaults/global_manage/master.conf to
-        /etc/busyback/master.conf*
+    **Roots crontab - create or add**
 
-3.  *Roots crontab - create or add*
+    1.  **roots_crontab.crtb**
 
-    1.  *roots_crontab.crtb*
+#### **O**ther files**
 
-#### **O**ther files:**
+1.  **cronjobs stay in OpenWRT_vaults/global_manage**
 
-1.  *cronjobs stay in OpenWRT_vaults/global_manage*
+    1.  **busyback_cronjob.sh - core cronjob**
 
-    1.  *busyback_cronjob.sh - core cronjob*
+        **hourly_cronjob.sh - backup of the config and bin files to a
+        save place**
 
-        *hourly_cronjob.sh - backup of the config and bin files to a
-        save place*
+    **The configuration file defining client overrides, create one for
+    each backup (see examples and more info below)**
 
-2.  *The configuration file defining client overrides, create one for
-    each backup (see examples and more info below)*
+    1.  **/mnt/OpenWRT_vaults/busyback-bank\>/\<vault\>/manage/busyback.conf**
 
-    1.  */mnt/OpenWRT_vaults/busyback-bank\>/\<vault\>/manage/busyback.conf*
+    **On Clients: Wrapper script in root’s .ssh(See below)**
 
-3.  *On Clients: Wrapper script in root’s .ssh(See below)*
-
-    1.  *allowed_commands.sh*
+    1.  **allowed_commands.sh**
 
 # Windows Integration Bridge
 
