@@ -165,6 +165,11 @@ the local user footprint.
     commnads („ls /etc“ and „cat /etc/hosts“) allowed for testing
     purposes.**
 
+    **and all other commands wh**i**ch are allowed. **The script also
+    uses **the **commad „exit“, an**d** in the script there are twe more
+    commnads („ls /etc“ and „cat /etc/hosts“) allowed for testing
+    purposes.**
+
 ### Setup
 
 **Create a mount point „/mnt/OpenWRT_vaults/“ busyback on the backup
