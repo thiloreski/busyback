@@ -73,15 +73,15 @@ To automate backups securely, setup passwordless authentication using the local 
 
 **3) Forced Command Wrapper on clients:** busyback may need to run with root rights, e.g. to backup a system folder or a set of folders belonging to several users. To prevent rogue root commands, use the forced command directive and prefix the target *authorized_keys* entry with restricted execution blocks if required by security policies:
 
-**command="/root/.ssh/allowed_commands.sh 2\> /root/.ssh/allowed_commands\_\`/bin/date +\\Y-\\m-\\d\_\\H-\\M-\\S\`\_stderr.log",no-port-forwarding,no-X11-forwarding,no-agent-forwarding ssh-ed25519 AAA…..**
+****command="/root/.ssh/allowed_commands.sh 2\> /root/.ssh/allowed_commands\_\`/bin/date +\\Y-\\m-\\d\_\\H-\\M-\\S\`\_stderr.log",no-port-forwarding,no-X11-forwarding,no-agent-forwarding ssh-ed25519 AAA…..****
 
-**in the script „allowed_commands.sh“ allow commands like**
+****in the script „allowed_commands.sh“ allow commands like****
 
-**rsync\\ --server\\ --sender\\ -\*(\[vnklLH\])ogD?(t)p?(A)?(X)r?(x)?(x)e.iLfxCIvu\\ ?(--ignore-errors\\ )?(--safe-links\\ )?(--numeric-ids\\ ).\\ \\@(etc\|home)\\**
+****rsync\\ --server\\ --sender\\ -\*(\[vnklLH\])ogD?(t)p?(A)?(X)r?(x)?(x)e.iLfxCIvu\\ ?(--ignore-errors\\ )?(--safe-links\\ )?(--numeric-ids\\ ).\\ \\@(etc\|home)\\****
 
-**and all other commands which are allowed. The script also uses the commad „exit“, and in the script there are twe more commnads („ls /etc“ and „cat /etc/hosts“) allowed for testing purposes.**
+****and all other commands which are allowed. The script also uses the commad „exit“, and in the script there are twe more commnads („ls /etc“ and „cat /etc/hosts“) allowed for testing purposes.****
 
-**command="/root/.ssh/allowed_commands.sh 2\> /root/.ssh/allowed_commands\_\`/bin/date +\\Y-\\m-\\d\_\\H-\\M-\\S\`\_stderr.log",no-port-forwarding,no-X11-forwarding,no-agent-forwarding ssh-ed25519 AAA…..**
+****command="/root/.ssh/allowed_commands.sh 2\> /root/.ssh/allowed_commands\_\`/bin/date +\\Y-\\m-\\d\_\\H-\\M-\\S\`\_stderr.log",no-port-forwarding,no-X11-forwarding,no-agent-forwarding ssh-ed25519 AAA…..****
 
 #### Mount point
 
