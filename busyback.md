@@ -201,7 +201,7 @@ commad „****exit****“, and in the script there are twe more commnads
 
 #### **O**ther files:**
 
-1.  **cronjobs stay in OpenWRT_vaults/global_manage**
+1.  **c**ronjobs stay in OpenWRT_vaults/global_manage**
 
     1.  **busyback_cronjob.sh - core cronjob**
 
