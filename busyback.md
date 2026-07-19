@@ -93,7 +93,7 @@ To automate backups securely, setup passwordless authentication using the local 
 
 #### **Files**
 
-**Co**py the whole structure of the repo into „/mnt/OpenWRT_vaults/manage“.**
+**Co**py **Copy **the whole structure of the repo into „/mnt/OpenWRT_vaults/manage“.**
 
 ##### **Main files:**
 
