@@ -65,7 +65,7 @@ Before executing the script, ensure the following tools are installed:
 
 ### SSH Key Distribution
 
-To atomate backups securely, setup passwordless authentication using the local user footprint.
+To automate backups securely, setup passwordless authentication using the local user footprint.
 
 **1) Authorized Keys:** Append the backup server's public key (e.g., */etc/dropbear/id_dropbear_backup.pub* or *id_rsa.pub*) to the target remote user's (i.e. root or admin user on Windows with cygwin ) *authorized_keys* file.
 
