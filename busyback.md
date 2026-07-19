@@ -153,17 +153,16 @@ the local user footprint.
     +\\Y-\\m-\\d\_\\H-\\M-\\S\`\_stderr.log",no-port-forwarding,no-X11-forwarding,no-agent-forwarding
     ssh-ed25519 AAA…..*
 
-    **in the script „allowed_commands.sh“ allow commands like**
+** in the script „allowed_commands.sh“ allow commands like**
 
-    *rsync\\ --server\\ --sender\\
+1.  *rsync\\ --server\\ --sender\\
     -\*(\[vnklLH\])ogD?(t)p?(A)?(X)r?(x)?(x)e.iLfxCIvu\\
     ?(--ignore-errors\\ )?(--safe-links\\ )?(--numeric-ids\\ ).\\
     \\@(etc\|home)\\*
 
-    **and all other commands which are allowed. The script also uses the
-    commad „exit“, and in the script there are twe more commnads („ls
-    /etc“ and „cat /etc/hosts“) allowed for testing purposes.**  
-    **
+> **and all other commands which are allowed. The script also uses the
+> commad „exit“, and in the script there are twe more commnads („ls
+> /etc“ and „cat /etc/hosts“) allowed for testing purposes.**
 
 ### Setup
 
