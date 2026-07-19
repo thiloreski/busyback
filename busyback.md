@@ -45,7 +45,7 @@ for every vault processed:
 2.  **Check Precondition: **Checks mounted crypto drive and existence of
     needed folder.
 
-3.  **Loop through all Vaults:**
+3.  Loop through all Vaults:
 
 4.  **Load Local Vault Settings:** Reads the vault (client) specific
     > configuration file (*busyback.conf*) for config params that
@@ -181,13 +181,13 @@ d\) copy the following files
   **/mnt/OpenWRT_vaults/**global_manage/cd**bin/busyback to
   **/**usr/bin/**busyback** **
 
-- **what are the latest successful backups **(chmod to
-  exs**e**cuteable)**
+  **what are the latest successful backups **(chmod to
+  ex**e**cuteable)**
 
-  **/mnt/OpenWRT_vaults/**global_manag**e/**bin/**latest_busyback **t**o
+  **/mnt/OpenWRT_vaults/global_manag**e/**bin/**latest_busyback t**o
   **/usr/bin/**latest_busyback**
 
-- **Global defaults**
+  **Global defaults**
 
   **/mnt/OpenWRT_vaults/global_manage/master.conf to
   /etc/busyback/master.conf**
@@ -201,15 +201,16 @@ d\) copy the following files
 - **cronj**ob**s stay in OpenWRT_vaults/global_manage**
 
   - **busyback_cronjob.sh** **– **core **cronjob**
-  - **hourly_cronjob.sh** **– **backup of the config and bin files to a
+
+    **hourly_cronjob.sh** **– **backup of the config and bin files to a
     save place**
 
-- **The configuration file defining client overrides, **create one for
-  each client (see below)**
+  **The configuration file defining client overrides, **create one for
+  each **backuip **(see below)**
 
   */mnt/OpenWRT_vaults/busyback-bank\>/\<vault\>/manage/busyback.conf*
 
-- **On Clients: **W**rapper scrip**t** in root’s .ssh **(See below) **
+  **On Clients: **W**rapper scrip**t** in root’s .ssh **(See below) **
 
   **allowed_commands.sh**
 
