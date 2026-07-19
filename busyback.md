@@ -148,17 +148,17 @@ the local user footprint.
     entry with restricted execution blocks if required by security
     policies:
 
-    ´´´ **command="/root/.ssh/allowed_commands.sh 2\>
+    *command="/root/.ssh/allowed_commands.sh 2\>
     /root/.ssh/allowed_commands\_\`/bin/date
     +\\Y-\\m-\\d\_\\H-\\M-\\S\`\_stderr.log",no-port-forwarding,no-X11-forwarding,no-agent-forwarding
-    ssh-ed25519 AAA….. ´´´**
+    ssh-ed25519 AAA….. *
 
     **in the script „allowed_commands.sh“ allow commands like**
 
-    ´´´**rsync\\ --server\\ --sender\\
+    *rsync\\ --server\\ --sender\\
     -\*(\[vnklLH\])ogD?(t)p?(A)?(X)r?(x)?(x)e.iLfxCIvu\\
     ?(--ignore-errors\\ )?(--safe-links\\ )?(--numeric-ids\\ ).\\
-    \\@(etc\|home)\\´´´**
+    \\@(etc\|home)\\*
 
     **and all other commands wh**i**ch are allowed. **The script also
     uses **the **commad „exit“, an**d** in the script there are twe more
@@ -180,8 +180,8 @@ not.**
 if you do not have a device, the backup ist stored in the disk space of
 the backup server, which space may be limitid. If you do not have an
 encrypted devi**c**e, your backups will be plain. For testing puposes
-you can skip mount **and unlock. To easy create and unlock a device
-under busybo**x** see repo „crypto-manage“ in GitHub.**
+you can skip mount and unlock. To easy create and unlock a device under
+busybo**x** see repo „crypto-manage“ in GitHub.**
 
 **
 
