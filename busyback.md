@@ -30,83 +30,93 @@ Busyback has a dry run feature as default. To execute backups add „go“
 as last command line paramter, else it is a dry run and does not change
 anything on disk.
 
-## 1) Introduction & Concept
+## Introduction & Concept
 
 When triggered al vaults in the master.conf file are processed. To
 process a single vault, give the vault as command line parameter. The
 following steps are executed, step 1 nd 2 once per run, from step 3 on
 for every vault processed:
 
-1.  **Load Global Configuration:** Parses the primary master
-    configuration file (*master.conf*) to establish default base fields
-    such as the storage *bank*, default exclusion lists, and the global
-    fallback SSH port.
+### 1) Load Global Configuration
 
-2.  **Check Precondition: **Checks mounted crypto drive and existence of
-    needed folder.
+Parses the primary master configuration file (*master.conf*) to
+establish default base fields such as the storage *bank*, default
+exclusion lists, and the global fallback SSH port.
 
-3.  Loop through all Vaults:
+### 2) Check Precondition
 
-4.  **Load Local Vault Settings:** Reads the vault (client) specific
-    > configuration file (*busyback.conf*) for config params that
-    > override global parameters (*exclude*, *rsync-options*, local
-    > overrides for retention rules, or a customized target port).
+Checks mounted crypto drive and existence of needed folder.
 
-5.  Assemble Rsync options: Compile Standard options and excludes from
-    > global and local conf file, set authentication for client
+### Thje following steps loop through all Vaults:
 
-6.  **Resolve Network Identity:** Local bakups are just defined by the
-    > root of the tree to backup. If no host is set or „localhost“,
-    > localhost will be the backup client. Identifies the remote targets
-    > user, cleint hostname or IP address plus an optional port and
-    > checks availability. Fallback for user, client and port are root,
-    > localhost, 22. A client-specific port definition takes absolute
-    > precedence over a global port config. Authorisation for remote
-    > clients is implemented by setting *\$RSYNC_RSH* to the internal
-    > key. The key mst be in th users „authorized keys“ on client side,
-    > preferable with „forced command“ see wrapper script below. In
-    > addition the client mustt be in tehknpown hoste file of the backu
-    > server’s root. An initial reachability check by SSH handshake (ssh
-    > \<user\>@\<client\> -p \<port\> „exit“) within a defined timeout
-    > window.). If the client fails to respond and both MAC address and
-    > net segment of the client are defined in the config, the script
-    > issues a broadcast magic packet to wake up the remote station.
-    > Then pauses execution for a 45-second sleep interval to allow the
-    > remote system (such as a Windows desktop resuming from sleep) to
-    > initialize its networking stack, followed by a final SSH handshake
-    > re-check. If the client is still not reachable, the vault is
-    > skipped.
+### 3) Load Local Vault Settings
 
-7.  **Expiry:** According to global or local expiry rule in cron like
-    > fomat obsolete backups are removed.
+Reads the vault (client) specific configuration file (*busyback.conf*)
+for config params that override global parameters (*exclude*,
+*rsync-options*, local overrides for retention rules, or a customized
+target port).
 
-8.  **Find Best Reference Image for Hardlinks: **Parses the vault index
-    > backward to find the most recent *successful* (non-failed) backup
-    > image. This chosen backup is passed to the engine as the
-    > *--reference* image, ensuring that unchanged files simply generate
-    > standard filesystem hardlinks instead of transferring duplicate
-    > data over the network.
+### 4) Assemble Rsync options
 
-9.  **Clean and Preserve Broken Backups:** Audits the target vault's
-    > history to handle incomplete or interrupted runs (e.g., from a
-    > previous network drop or power failure). It checks for unfinalized
-    > snapshot directories. if no successful backup as reference was
-    > found in step 8, the youngest „incomplete“ unsuccessful backup is
-    > stored as a fallback referecne backup, this backup is choosen with
-    > the rsync option –compare-dest (instead of –link-dest) as a
-    > reference for the current backup. Instead of deleting corrupted
-    > data, it renames and isolates the broken directory with a
-    > *.incomplete* suffix, clearing the workspace without data loss.
+Compile Standard options and excludes from global and local conf file,
+set authentication for clien.
 
-10. **Execute Backup:** Injects the custom port and SSH keys via the
-    > *\$RSYNC_RSH* environment variable and starts the backup run for
-    > thei vault with the so far derived options/parameters. System
-    > output and transfer statistics are streamed into a *log* file.
-    > Upon a successful zero-exit code completion, the script generates
-    > a *summary* file to mark the new snapshot as a valid reference
-    > point for future runs.
+### 5) Resolve Network Identity
 
-# Preconditions & Setup
+Local bakups are just defined by the root of the tree to backup. If no
+host is set or „localhost“, localhost will be the backup client.
+Identifies the remote targets user, cleint hostname or IP address plus
+an optional port and checks availability. Fallback for user, client and
+port are root, localhost, 22. A client-specific port definition takes
+absolute precedence over a global port config. Authorisation for remote
+clients is implemented by setting *\$RSYNC_RSH* to the internal key. The
+key mst be in th users „authorized keys“ on client side, preferable with
+„forced command“ see wrapper script below. In addition the client mustt
+be in tehknpown hoste file of the backu server’s root. An initial
+reachability check by SSH handshake (ssh \<user\>@\<client\> -p \<port\>
+„exit“) within a defined timeout window.). If the client fails to
+respond and both MAC address and net segment of the client are defined
+in the config, the script issues a broadcast magic packet to wake up the
+remote station. Then pauses execution for a 45-second sleep interval to
+allow the remote system (such as a Windows desktop resuming from sleep)
+to initialize its networking stack, followed by a final SSH handshake
+re-check. If the client is still not reachable, the vault is skipped.
+
+### 6) Expiry
+
+According to global or local expiry rule in cron like fomat obsolete
+backups are removed.
+
+### 7) Find Best Reference Image for Hardlinks
+
+Parses the vault index backward to find the most recent *successful*
+(non-failed) backup image. This chosen backup is passed to the engine as
+the *--reference* image, ensuring that unchanged files simply generate
+standard filesystem hardlinks instead of transferring duplicate data
+over the network.
+
+### 8) Clean and Preserve Broken Backups
+
+Audits the target vault's history to handle incomplete or interrupted
+runs (e.g., from a previous network drop or power failure). It checks
+for unfinalized snapshot directories. if no successful backup as
+reference was found in step 8, the youngest „incomplete“ unsuccessful
+backup is stored as a fallback referecne backup, this backup is choosen
+with the rsync option –compare-dest (instead of –link-dest) as a
+reference for the current backup. Instead of deleting corrupted data, it
+renames and isolates the broken directory with a *.incomplete* suffix,
+clearing the workspace without data loss.
+
+### 9) Execute Backup
+
+Injects the custom port and SSH keys via the *\$RSYNC_RSH* environment
+variable and starts the backup run for thei vault with the so far
+derived options/parameters. System output and transfer statistics are
+streamed into a *log* file. Upon a successful zero-exit code completion,
+the script generates a *summary* file to mark the new snapshot as a
+valid reference point for future runs.
+
+## Preconditions & Setup
 
 ### Prerequisites
 
@@ -138,12 +148,10 @@ the local user footprint.
     entry with restricted execution blocks if required by security
     policies:
 
-    Plaintext
-
     **command="/root/.ssh/allowed_commands.sh 2\>
     /root/.ssh/allowed_commands\_\`/bin/date
-    +\\Y-\\m-\\d\_\\H-\\M-\\S\`\_stderr.log",no-port-forwarding,no-X11-forwarding,no-agent-**  
-    forwarding ssh-ed25519 AAA…..**
+    +\\Y-\\m-\\d\_\\H-\\M-\\S\`\_stderr.log",no-port-forwarding,no-X11-forwarding,no-agent-forwarding
+    ssh-ed25519 AAA…..**
 
     **in the script „allowed_commands.sh“ allow commands like**
 
@@ -158,61 +166,61 @@ the local user footprint.
 
 ### Setup
 
-1.  **Create a mount p**o**int „/mnt/OpenWRT_vaults/“ busyback on the
-    > backup server. In what follows, all reference**s** to the name.
-    > You may choose a different one, but be aware of changes when
-    > reading further, **in particular in the conjobs. **Be aware that
-    > in the cryptsetup config files character of device names are
-    > limited. e.g „\_“ is allowed, but „-“ not.**
+**Create a mount point „/mnt/OpenWRT_vaults/“ busyback on the backup
+server. In what follows, all references to the name. You may choose a
+different one, but be aware of changes when reading further, in
+particular in the conjobs. Be aware that in the cryptsetup config files
+character of device names are limited. e.g „\_“ is allowed, but „-“
+not.**
 
-2.  **Mount and unlock your backup device. Busyback runs without that,
-    > but if you do not have a device, the backup ist stored in the disk
-    > space of the backup server, which space may be limitid. If you do
-    > not have an encrypted devi**c**e, your backups will be plain. For
-    > testing puposes you can skip mount and unlock. To easy create and
-    > unlock a device under busybo**x** see repo „crypto-manage“ in
-    > GitHub.**
+**Mount and unlock your backup device. Busyback runs without that, but
+if you do not have a device, the backup ist stored in the disk space of
+the backup server, which space may be limitid. If you do not have an
+encrypted devi**c**e, your backups will be plain. For testing puposes
+you can skip mount and unlock. To easy create and unlock a device under
+busybo**x** see repo „crypto-manage“ in GitHub.**
 
-3.  **Copy the whole structure of the repo into
-    > „/mnt/OpenWRT_vaults/manage“**
+**Copy the whole structure of the repo into
+„/mnt/OpenWRT_vaults/manage“**
 
-4.  **copy the following files**
+**copy the following files:**
 
-- - **core (chmod to executeable)**
+> **core (chmod to executeable)**
 
-    ****/mnt/OpenWRT_vaults/global_manage/cdbin/busyback**** to
-    ****/usr/bin/busyback****
+> ****/mnt/OpenWRT_vaults/global_manage/cdbin/busyback**** to
+> ****/usr/bin/busyback****
 
-  - **what are the latest successful backups (chmod to executeable)**
+> **what are the latest successful backups (chmod to executeable)**
 
-    ****/mnt/OpenWRT_vaults/global_manage/bin/latest_busyback**** to
-    ****/usr/bin/latest_busyback****
+> ****/mnt/OpenWRT_vaults/global_manage/bin/latest_busyback**** to
+> ****/usr/bin/latest_busyback****
 
-  - **Global defaults**
+> **Global defaults**
 
-    ****/mnt/OpenWRT_vaults/global_manage/master.conf**** to
-    ****/etc/busyback/master.conf****
+> ****/mnt/OpenWRT_vaults/global_manage/master.conf**** to
+> ****/etc/busyback/master.conf****
 
-> **e) Roots crontab - create or add**
+> **Roots crontab - create or add**
 
-- - ****roots_crontab.crtb****
+> ****roots_crontab.crtb****
 
-> **d) other files**
+> **other files**
 
-- - **cronjobs stay in OpenWRT_vaults/global_manage**
+> **cronjobs stay in OpenWRT_vaults/global_manage**
 
-    - ****busyback_cronjob.sh**** - core cronjob**
-    - ****hourly_cronjob.sh**** - backup of the config and bin files to
-      a save place**
+> ****busyback_cronjob.sh**** - core cronjob**
 
-  - **The configuration file defining client overrides, create one for
-    each backup (see **examples and more info **below)**
+> ****hourly_cronjob.sh**** - backup of the config and bin files to a
+> save place**
 
-    ****/mnt/OpenWRT_vaults/busyback-bank\>/\<vault\>/manage/busyback.conf****
+> **The configuration file defining client overrides, create one for
+> each backup (see **examples and more info **below)**
 
-  - **On Clients: Wrapper script in root’s .ssh(See below)**
+> ****/mnt/OpenWRT_vaults/busyback-bank\>/\<vault\>/manage/busyback.conf****
 
-    **allowed_commands.sh**
+> **On Clients: Wrapper script in root’s .ssh(See below)**
+
+> **allowed_commands.sh**
 
 # Windows Integration Bridge
 
