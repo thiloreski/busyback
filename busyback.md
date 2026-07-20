@@ -2,7 +2,7 @@
 
 # OpenWRT incremented snapshot backup
 
-Busyback creates a snapshot view of the filesystems to be backed up by combining a previous backup with recent changes. It runs in OpenWRT busybox and its processing relies on standard tool that come with the OS of the OpenWRT router (plus little standard extentitions). It is a lean and small tool, this documentation is the largest file in the repository, alltgether ist about 150 kB. Busyback is not needed to access backuped data.
+Busyback creates a snapshot view of the filesystems to be backed up by combining a previous backup with recent changes. It runs in OpenWRT busybox and its processing relies on standard tool that come with the OS of the OpenWRT router (plus little standard extentitions). It is a lean and small tool, this documentation is the largest file in the repository, alltgether ist about 2,5MB. Busyback is not needed to access backuped data.
 
 For convenience the system storing the backup (e.g. the OpenWRT router or other systems that run busybox) is called the „backup server“. In contrast, the server/system, that is subject to the backup, is named the „backup client“
 
