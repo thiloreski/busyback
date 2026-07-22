@@ -31,16 +31,23 @@ done
 
 #extglob:
 #to indicate repetition of chars, pout "*" or "+" before the brackets!
+#?(x) or *([x]) means: 0 or 1.
 #*(x) or *([x]) means: 0 or more (as x* in Regex).
 #+(x) or +([x]) means: 1 or more (as x+ in Regex).
+#?(xy) means: 0 or 1 "xy" (as string).
 #*(xy) means: 0 or more of "xy" (as string).
 #+(xy) measn: 1 or more of "xy" (as string).
+#?([xy]) means: 1 or zero of x or y. 
 #+([xy]) means: 1 or more x or y, matches "xy", "xxyy", "xyxyx", ....
 #*([xy]) - got it?
 
+# the rsync command covers a considerable set of different options by the above extglob espressions.
+# If something is wrong the calling server gets an error like "protokoll Error- is your sheill clean".
+# At the ende of the rsyc command an example for other paths is given
+
 shopt -s extglob
 case "$SSH_ORIGINAL_COMMAND" in
-	rsync\ --server\ --sender\ -*([vnklLH])ogD?(t)p?(A)?(X)r?(x)?(x)e.iL*(s)fxCIvu\ ?(--ignore-errors\ )?(--safe-links\ )?(--numeric-ids\ ).\ \/@(etc|home|media\/thilo\/FP3MIRR|mnt\/blue\/my-ones)?(\/) | \
+	rsync\ --server\ --sender\ -*([vnklLH])ogD?(t)p?(A)?(X)r?(x)?(x)e.iL*(s)fxCIvu\ ?(--ignore-errors\ )?(--safe-links\ )?(--numeric-ids\ ).\ \/@(etc|home|dir_at_rooti_level\/subdir1\/subdir2)?(\/) | \
 	"exit"					| \
 	"cat /etc/hosts"					| \
 	"ls -alt /etc" )
