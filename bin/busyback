@@ -19,7 +19,7 @@ LOCAL_EXCLUDE_FILE="$TEMP_DIR/local_exclude.txt"
 FINAL_EXCLUDE_FILE="$TEMP_DIR/final_exclude.txt"
 
 # The trap deletes the whole directory
-trap 'rm -rf "$TEMP_DIR"' EXIT INT TERM
+trap 'rm -rf "$TEMP_DIR"' EXIT INT TERM HUP
 
 # 1. Parameter parsing: Check if first argument is a vault or 'go'
 if [ "$1" = "go" ]; then
@@ -305,6 +305,7 @@ for VAULT_NAME in $VAULTS_TO_RUN; do
     # Create lockfile if in production mode
     if [ "$DRY_RUN" = "0" ]; then
         echo "$$" > "$LOCK_FILE"
+        trap 'rm -rf "$LOCK_FILE"' EXIT INT TERM HUP
     else
         echo "  [Dry-Run] Would create lockfile: $LOCK_FILE"
     fi
@@ -386,6 +387,20 @@ for VAULT_NAME in $VAULTS_TO_RUN; do
         SRC_PATH="${TREE}"
         echo "  Type: Local Backup [localhost]"
     else
+        # try to slve hostname, max 10 secs
+#        LOOP_COUNT=0
+#        DNS_FAILED=0
+#        while ! nslookup "$CLIENT" >/dev/null 2>&1; do
+#            if [ $LOOP_COUNT -ge 10 ]; then
+#                echo "ERROR: DNS resolution for $CLIENT failed."
+#                DNS_FAILED=1
+#                break
+#                exit 1
+#            fi
+#            sleep 1
+#            LOOP_COUNT=$((LOOP_COUNT + 1))
+#        done
+#        [ "$DNS_FAILED" -eq 1 ] && continue
         # REMOTE REACHABILITY CHECK & WAKE-ON-LAN (ssh in case the client is stealth against pings WOL to wake up window stations)
         # Use the official rsync environment variable for SSH configuration
         export RSYNC_RSH="dbclient -p $PORT -i $SSH_KEY"
@@ -429,13 +444,13 @@ for VAULT_NAME in $VAULTS_TO_RUN; do
                  continue
               fi
            else
-              echo "  ✗ [ERROR] Server $CLIENT is not reachable (no answer to ssh for ${SECS} secs - no WIN client)!"
+              echo "  ✗ [ERROR] Server $CLIENT is not reachable (no answer to ssh for ${SECS} secs - no WOL defined - will not try to wake up client)!"
               echo "    Skipping vault $VAULT_NAME completely."
               cleanup_dir_and_lock
               continue
            fi
         fi
-        
+set +xv
         # Assemble remote source path using dynamically determined user
         SRC_PATH="${BACKUP_USER}@${CLIENT}:${TREE}"
         echo "  ✓ Server online. Type: Remote Backup via SSH (User: $BACKUP_USER)"

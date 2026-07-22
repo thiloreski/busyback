@@ -7,6 +7,11 @@ config global
 	option delay_root '5'
 	option check_fs '0'
 
+config mount
+	option target '/mnt/256GB-Stick'
+	option uuid 'e47b85b0-3b15-4b90-9a9b-3450c83f4eda'
+	option enabled '1'
+
 config 'mount'
         option  target  '/mnt/OpenWRT_vaults'
         option  device  '/dev/mapper/OpenWRT_vaults'

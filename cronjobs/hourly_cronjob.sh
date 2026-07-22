@@ -1,6 +1,6 @@
 #!/bin/sh 
 GLO_MAN=/mnt/OpenWRT_vaults/global_manage
-for i in /mnt/OpenWRT_vaults/busyback_bank/* ; do 
+for i in /mnt/OpenWRT_vaults/busyback_bank/4TBO_* ; do 
    SOURCE=${i}/manage/busyback.conf
    TARGET=${GLO_MAN}/config/busyback.vault.configs/$(basename ${i})_busyback.config
    echo "rsync -avvi ${SOURCE} ${TARGET}"
