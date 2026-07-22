@@ -2,32 +2,20 @@
 
 # Configuration Files Documentation
 
-Since this script is a lightweight backup system designed for OpenWrt,
-both files use a simple **key-value syntax** based on YAML patterns,
-parsed efficiently via *sed* and *awk* in POSIX shell.
+Since this script is a lightweight backup system designed for OpenWrt, both files use a simple **key-value syntax** based on YAML patterns, parsed efficiently via *sed* and *awk* in POSIX shell.
 
 ## General Syntax Rules
 
-To ensure the script parses your configuration files correctly, follow
-these rules:
+To ensure the script parses your configuration files correctly, follow these rules:
 
-1.  **Simple Variables (Single-line):** *key: value* (separated by a
-    colon). Any spaces after the colon are ignored.
-2.  **Lists (Multi-line):** Begin with the key name followed by a colon.
-    Subsequent lines contain the list values (indented with spaces or
-    tabs). The list ends as soon as a new key (a line containing a
-    colon) is encountered.
-3.  **Comments:** Lines starting with *\#* are ignored. Inline comments
-    starting with *\#* are allowed only inside expiration rules
-    (*expire*).
-4.  **No Special Characters in Keys:** Keys must only contain letters,
-    numbers, hyphens (*-*), and underscores (*\_*).
+1.  **Simple Variables (Single-line):** *key: value* (separated by a colon). Any spaces after the colon are ignored.
+2.  **Lists (Multi-line):** Begin with the key name followed by a colon. Subsequent lines contain the list values (indented with spaces or tabs). The list ends as soon as a new key (a line containing a colon) is encountered.
+3.  **Comments:** Lines starting with *\#* are ignored. Inline comments starting with *\#* are allowed only inside expiration rules (*expire*).
+4.  **No Special Characters in Keys:** Keys must only contain letters, numbers, hyphens (*-*), and underscores (*\_*).
 
 ## 1. */etc/busyback/master.conf* (Global Configuration)
 
-This file controls global default values, defines the central backup
-storage, and specifies which vaults (backup jobs) are executed by
-default.
+This file controls global default values, defines the central backup storage, and specifies which vaults (backup jobs) are executed by default.
 
 ### Example Configuration
 
@@ -88,9 +76,7 @@ YAML
 
 ## 2. *\<bank\>/\<vault_name\>/manage/busyback.conf* (Vault Configuration)
 
-Every backup job (vault) must have its own directory inside the *bank*
-containing this local configuration file. It configures client-specific
-connection info and can override or extend global settings.
+Every backup job (vault) must have its own directory inside the *bank* containing this local configuration file. It configures client-specific connection info and can override or extend global settings.
 
 ### Example Configuration
 
@@ -126,8 +112,7 @@ YAML
 
 ### Parameter Details 
 
-Thje only required parameter is **tree**, all other parameters are
-optional.
+Thje only required parameter is **tree**, all other parameters are optional.
 
 |                     |                       |                                                                                                                                             |
 |---------------------|-----------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
@@ -141,10 +126,9 @@ optional.
 | ***expire***        | Multi-line List       | Fully overrides the global *expire* rules for this specific vault.                                                                          |
 | ***rsync-options*** | Multi-line List       | Local *rsync* arguments for this vault. These are *appended* to the global options.                                                         |
 
-## How the *expire* Rules Work (Dirvish-Style)
+## How the *expire* Rules Work (crontab-Style)
 
-The script evaluates backup retention based on Dirvish rules. Every line
-represents a distinct matching condition:
+The script evaluates backup retention based on rules in contab style. Every line represents a distinct matching condition:
 
 Plaintext
 
@@ -156,23 +140,16 @@ Plaintext
 
   - *Day*: Day of the month (1–31)
   - *Month*: Month of the year (1–12)
-  - *Day-of-Week*: Day of the week (1 = Monday, 7 = Sunday. Ranges like
-    *1-5* or lists like *1,3,5* are supported).
-  - *Note:* The *Minute* and *Hour* fields are ignored by the script (as
-    backups usually trigger via daily cron), but they must remain in the
-    file as placeholders (*\**).
+  - *Day-of-Week*: Day of the week (1 = Monday, 7 = Sunday. Ranges like *1-5* or lists like *1,3,5* are supported).
+  - *Note:* The *Minute* and *Hour* fields are ignored by the script (as backups usually trigger via daily cron), but they must remain in the file as placeholders (*\**).
 
 - Retention Duration:
 
   - Defines how long a backup created on a matching day is preserved.
-  - Syntax: *+X days*, *+X weeks*, *+X months*, *+X years*, or *never*
-    (keep indefinitely).
+  - Syntax: *+X days*, *+X weeks*, *+X months*, *+X years*, or *never* (keep indefinitely).
 
 ### Rule Resolution Order:
 
-When cleaning up, the script checks each backup folder's timestamp. It
-runs through the *expire* rules **from top to bottom**. The **first**
-rule that matches the backup’s creation date is applied. If none of the
-rules match, the script defaults to a fallback retention of **14 days**.
+When cleaning up, the script checks each backup folder's timestamp. It runs through the *expire* rules **from top to bottom**. The **first** rule that matches the backup’s creation date is applied. If none of the rules match, the script defaults to a fallback retention of **14 days**.
 
 </div>
