@@ -36,7 +36,8 @@ fi
 # Inform user about the operational mode
 if [ "$DRY_RUN" = "1" ]; then
     echo "===================================================="
-    echo "  [DRY-RUN MODE] - No changes will be made to disk"
+    echo "  [DRY-RUN MODE] - No backups will be created, "
+    echo "                   but small changes on disk, like creation of backup directory and exclude lists"
     echo "  To run for real, append 'go' to your command."
     echo "===================================================="
 fi
@@ -316,11 +317,7 @@ for VAULT_NAME in $VAULTS_TO_RUN; do
     # START-TIMESTAMP (Precise logging for the current vault)
     echo "  Start time: $(date '+%Y-%m-%d %H:%M:%S')"
     
-    if [ "$DRY_RUN" = "0" ]; then
-        mkdir -p "$CURRENT_IMAGE_DIR"
-    else
-        echo "  [Dry-Run] Would create image directory: $CURRENT_IMAGE_DIR"
-    fi
+    mkdir -p "$CURRENT_IMAGE_DIR"
 
     # 4. Load local vault configuration
     # Create a local exclude temp file for this specific vault run
@@ -359,8 +356,8 @@ for VAULT_NAME in $VAULTS_TO_RUN; do
 
     # 5. Assemble Rsync options
 
-    #RSYNC_OPTS="-aHAXxv --numeric-ids --stats --delete --itemize-changes"
-    RSYNC_OPTS="-axv --numeric-ids --stats --delete --itemize-changes"
+    #RSYNC_OPTS="-aHAXxv --timeout=30 --numeric-ids --stats --delete --itemize-changes"
+    RSYNC_OPTS="-axv --timeout=30 --numeric-ids --stats --delete --itemize-changes"
     
     RSYNC_OPTS="$RSYNC_OPTS --partial-dir=.rsync-partial"
     # Merge global and local excludes into a single file for rsync
@@ -387,29 +384,15 @@ for VAULT_NAME in $VAULTS_TO_RUN; do
         SRC_PATH="${TREE}"
         echo "  Type: Local Backup [localhost]"
     else
-        # try to slve hostname, max 10 secs
-#        LOOP_COUNT=0
-#        DNS_FAILED=0
-#        while ! nslookup "$CLIENT" >/dev/null 2>&1; do
-#            if [ $LOOP_COUNT -ge 10 ]; then
-#                echo "ERROR: DNS resolution for $CLIENT failed."
-#                DNS_FAILED=1
-#                break
-#                exit 1
-#            fi
-#            sleep 1
-#            LOOP_COUNT=$((LOOP_COUNT + 1))
-#        done
-#        [ "$DNS_FAILED" -eq 1 ] && continue
         # REMOTE REACHABILITY CHECK & WAKE-ON-LAN (ssh in case the client is stealth against pings WOL to wake up window stations)
         # Use the official rsync environment variable for SSH configuration
-        export RSYNC_RSH="dbclient -p $PORT -i $SSH_KEY"
-        echo "  Checking reachability of server [$CLIENT]..."
+        export RSYNC_RSH="dbclient -K 10 -p $PORT -i $SSH_KEY"
+        echo "  Checking reachability of server [$CLIENT:$PORT]..."
         # old, instead of ping use ssh:
         # -c 2 sends two pings, -W 2 waits a maximum of 2 seconds for a response
         # if ! ping -c 2 -W 2 "$CLIENT" > /dev/null 2>&1; then
 	SECS=15
-        if ! socat -t ${SECS} EXEC:"ssh -p $PORT -q -i /etc/dropbear/id_dropbear_backup ${BACKUP_USER}@${CLIENT} exit" - 2>&1 ; then
+        if ! socat -t ${SECS} - EXEC:"ssh -p $PORT -q -i /etc/dropbear/id_dropbear_backup ${BACKUP_USER}@${CLIENT} exit" 2>&1 ; then
            # if both WOL_MAC and WOL_NET set, the config determines a wol shot cross network segmets
            if [ -n "$WOL_MAC" ] && [ -n "$WOL_NET" ]; then
               echo "  [WoL] WOL_MAC and WOL_NET set => Windows station not answering - trying to wakeup..."
@@ -437,7 +420,7 @@ for VAULT_NAME in $VAULTS_TO_RUN; do
 
               echo "  [WoL] Packet transmitted. Waiting 45 seconds for system boot..."
               sleep 45
-              if ! socat -t 5 EXEC:"ssh -p $PORT -q -i /etc/dropbear/id_dropbear_backup ${BACKUP_USER}@${CLIENT} exit" - 2>&1 ; then
+              if ! socat -t 5 - EXEC:"ssh -p $PORT -q -i /etc/dropbear/id_dropbear_backup ${BACKUP_USER}@${CLIENT} exit" 2>&1 ; then
                  echo "  ✗ [ERROR] Server $CLIENT is not reachable (WIN Client - wol and wait 45 sec, still no answer to ssh for ${SECS} secs )!"
                  echo "    Skipping vault $VAULT_NAME completely."
                  cleanup_dir_and_lock
@@ -450,14 +433,17 @@ for VAULT_NAME in $VAULTS_TO_RUN; do
               continue
            fi
         fi
-set +xv
         # Assemble remote source path using dynamically determined user
         SRC_PATH="${BACKUP_USER}@${CLIENT}:${TREE}"
         echo "  ✓ Server online. Type: Remote Backup via SSH (User: $BACKUP_USER)"
     fi
     # Dynamic element paths within the $TIMESTAMP directory
     NEW_TREE="$CURRENT_IMAGE_DIR/tree"
-    VAULT_LOG="$CURRENT_IMAGE_DIR/rsync.log"
+    if [ "$DRY_RUN" = "0" ]; then 
+       VAULT_LOG="$CURRENT_IMAGE_DIR/rsync.log"
+    else
+       VAULT_LOG="/dev/stdout"
+    fi 
 
     # Search and purge old timestamps (listing all directories except 'manage')
     IMAGES=$(find "$vault_path" -mindepth 1 -maxdepth 1 -type d ! -name "manage" | sort)
@@ -482,7 +468,8 @@ set +xv
         IMG_DATE=$(echo "$IMG_NAME" | cut -d'-' -f1-3)
         # Get matching rule DURATION (e.g. "+2 weeks", "+1 year")
         DURATION=$(get_expire_duration "$IMG_DATE" "$EXPIRE_RULES")
-        echo "$IMG_DATE", "$DURATION", "from:" ; echo "$EXPIRE_RULES" | tr '\n' '|' ; echo
+#        echo "$IMG_DATE", "$DURATION", "from:" ; echo "$EXPIRE_RULES" | tr '\n' '|' ; echo
+        echo "$IMG_DATE", "$DURATION"
         # set file globbing to off in order not to expand "*"s when echoing variable w/o '"'
         # set -f
         # echo $IMG_DATE, $DURATION, $EXPIRE_RULES
@@ -649,90 +636,91 @@ EOF
     cat ${FINAL_EXCLUDE_FILE} | sed -e "s/^/\"/;s/$/\"/" | tr '\n' ' ' ; echo
     echo "-----------------------------------------------------"
 
-    if [ "$DRY_RUN" = "0" ]; then
-        mkdir -p "$NEW_TREE"
-        # Initialize log header in the timestamp directory
-        echo "=== RSYNC BACKUP LOG FOR VAULT $VAULT_NAME ===" > "$VAULT_LOG"
-        echo "Start time: $(date '+%Y-%m-%d %H:%M:%S')" >> "$VAULT_LOG"
-        echo "Source:     $SRC_PATH" >> "$VAULT_LOG"
-        # log excludes 
-        echo "------------------------------------------------" >> "$VAULT_LOG"
-        echo "Active Excludes for this run:" >> "$VAULT_LOG"
-        (cat ${FINAL_EXCLUDE_FILE} | sed -e "s/^/\"/;s/$/\"/" | tr '\n' ' ' ; echo ) >> "$VAULT_LOG"
-        echo "------------------------------------------------" >> "$VAULT_LOG"
-
-        # rsync writes directly into $TIMESTAMP/rsync.log
-        echo "rsync $RSYNC_OPTS $REF_OPT $SRC_PATH \"$NEW_TREE\"" >> "$VAULT_LOG" 2>&1
-        CMD="rsync $RSYNC_OPTS $REF_OPT $SRC_PATH \"$NEW_TREE\""
-        eval "$CMD" >> "$VAULT_LOG" 2>&1  
-        # Immediately store the rsync exit code in a variable 
-        STATUS=$?
-        echo "rsync exit status: $STATUS"
-
-        # If everything went smoothly or ONLY temporary files were deleted (Code 24)
-        if [ $STATUS -eq 0 ] || [ $STATUS -eq 24 ]; then
-            echo "  ✓ Vault $VAULT_NAME successfully backed up."
-            echo "  Archiving backup configuration..."
-            cp "$FINAL_EXCLUDE_FILE" "$CURRENT_IMAGE_DIR/excludes"
-            # --- Generate index for fast lookup ---
-            echo "  Generating backup index..."
-            # Format: Inode | Size | Relative Path (starting from tree/)
-            # create tmp index file
-            TEMP_IDX="$CURRENT_IMAGE_DIR/index.tmp"
-            > "$TEMP_IDX"
-
-            # 1. Directories (type 'd')
-            (cd "$CURRENT_IMAGE_DIR/tree" && find . -type d -exec ls -id {} \;) | awk '{print $1 "|4096|d|" substr($0, index($0, $2))}' >> "$TEMP_IDX"
-
-            # 2. Symlinks (type 'l')
-            (cd "$CURRENT_IMAGE_DIR/tree" && find . -type l -exec ls -id {} \;) | awk '{print $1 "|0|l|" substr($0, index($0, $2))}' >> "$TEMP_IDX"
-
-            # 3. Regualr files  (type 'f')
-            (cd "$CURRENT_IMAGE_DIR/tree" && find . -type f -exec ls -is {} \;) | awk '{print $1 "|" $2 "|f|" substr($0, index($0, $3))}' >> "$TEMP_IDX"
-
-            # Gzip and remove tmp file
-            gzip -c "$TEMP_IDX" > "$CURRENT_IMAGE_DIR/index.gz"
-            rm -f "$TEMP_IDX"
-
-            echo -e "\n------------------------------------------------" >> "$VAULT_LOG"
-            echo "STATUS: SUCCESSFUL" >> "$VAULT_LOG"
-            # Update the central symlink in the manage/ directory to point to this run
-            rm -f "$LINK_MARKER"
-            ln -s "../../${VAULT_NAME}/$(basename "$CURRENT_IMAGE_DIR")" "$LINK_MARKER"
-            touch "$NEW_TREE" # Updates timestamp for the next sorting iteration
-        else
-            echo "  ✗ ERROR while backing up vault $VAULT_NAME!"
-            echo -e "\n------------------------------------------------" >> "$VAULT_LOG"
-            echo "STATUS: FAILED" >> "$VAULT_LOG"
-            #echo "  Notice: Backup tree might be incomplete. Log kept inside directory for analysis."
-            # Don't delete it; instead, mark it as incomplete for the next run. 
-            if [ -d "$NEW_TREE" ]; then
-                mv "$NEW_TREE" "${CURRENT_IMAGE_DIR}/tree.incomplete"
-                echo "  Notice: Incomplete backup saved as 'tree.incomplete' for delta-analysis."
-            fi
-        fi
-    
-        # END-TIMESTAMP (Logged directly inside the isolated rsync.log)
-        echo "End time: $(date '+%Y-%m-%d %H:%M:%S')" >> "$VAULT_LOG"
-        echo "Log: "$VAULT_LOG
-        ls -l $VAULT_LOG
-        tail -n 4 "$VAULT_LOG"
-    
-        # Always remove the lockfile upon completion or failure handling of this vault
-        rm -f "$LOCK_FILE"
-        sed -ne "/Number of files:/,$ {p}" $VAULT_LOG
-    else
+    DRY=
+    mkdir -p "$NEW_TREE"
+    if [ "$DRY_RUN" = "1" ]; then 
+        DRY="-n"
         echo "  [Dry-Run] Executing live simulation on screen (-n):"
         echo "-----------------------------------------------------"
-        # Run rsync with simulated '-n' directly onto terminal without saving a logfile
-        CMD="rsync -n $RSYNC_OPTS $REF_OPT $SRC_PATH \"$NEW_TREE\""
-        eval "$CMD"
-        # Immediately store the rsync exit code in a variable 
-        STATUS=$?
-        echo "rsync exit status: $STATUS"
+        trap 'rm -rf "$NEW_TREE"' EXIT INT TERM HUP
+    fi 
+    # Initialize log header in the timestamp directory
+    echo "=== RSYNC BACKUP LOG FOR VAULT $VAULT_NAME ===" > "$VAULT_LOG"
+    echo "Start time: $(date '+%Y-%m-%d %H:%M:%S')" >> "$VAULT_LOG"
+    echo "Source:     $SRC_PATH" >> "$VAULT_LOG"
+    # log excludes 
+    echo "------------------------------------------------" >> "$VAULT_LOG"
+    echo "Active Excludes for this run:" >> "$VAULT_LOG"
+    (cat ${FINAL_EXCLUDE_FILE} | sed -e "s/^/\"/;s/$/\"/" | tr '\n' ' ' ; echo ) >> "$VAULT_LOG"
+    echo "------------------------------------------------" >> "$VAULT_LOG"
+
+    # rsync writes directly into $TIMESTAMP/rsync.log or, if dry, stdout
+    CMD="rsync ${DRY} $RSYNC_OPTS $REF_OPT $SRC_PATH \"$NEW_TREE\""
+    echo ${CMD} >> "$VAULT_LOG" 2>&1
+    eval "$CMD" >> "$VAULT_LOG" 2>&1  
+    # Immediately store the rsync exit code in a variable 
+    STATUS=$?
+    echo "rsync exit status: $STATUS"
+
+    # If everything went smoothly or ONLY temporary files were deleted (Code 24)
+    if [ "$DRY_RUN" = "0" ]; then 
+       if [ $STATUS -eq 0 ] || [ $STATUS -eq 24 ]; then
+           echo "  ✓ Vault $VAULT_NAME successfully backed up."
+           echo "  Archiving backup configuration..."
+           cp "$FINAL_EXCLUDE_FILE" "$CURRENT_IMAGE_DIR/excludes"
+           # --- Generate index for fast lookup ---
+           echo "  Generating backup index..."
+           # Format: Inode | Size | Relative Path (starting from tree/)
+           # create tmp index file
+           TEMP_IDX="$CURRENT_IMAGE_DIR/index.tmp"
+           > "$TEMP_IDX"
+
+           # 1. Directories (type 'd')
+           (cd "$CURRENT_IMAGE_DIR/tree" && find . -type d -exec ls -id {} \;) | awk '{print $1 "|4096|d|" substr($0, index($0, $2))}' >> "$TEMP_IDX"
+   
+           # 2. Symlinks (type 'l')
+           (cd "$CURRENT_IMAGE_DIR/tree" && find . -type l -exec ls -id {} \;) | awk '{print $1 "|0|l|" substr($0, index($0, $2))}' >> "$TEMP_IDX"
+
+           # 3. Regular files  (type 'f')
+           (cd "$CURRENT_IMAGE_DIR/tree" && find . -type f -exec ls -is {} \;) | awk '{print $1 "|" $2 "|f|" substr($0, index($0, $3))}' >> "$TEMP_IDX"
+   
+           # Gzip and remove tmp file
+           gzip -c "$TEMP_IDX" > "$CURRENT_IMAGE_DIR/index.gz"
+           rm -f "$TEMP_IDX"
+
+           echo -e "\n------------------------------------------------" >> "$VAULT_LOG"
+           echo "STATUS: SUCCESSFUL" >> "$VAULT_LOG"
+           # Update the central symlink in the manage/ directory to point to this run
+           rm -f "$LINK_MARKER"
+           ln -s "../../${VAULT_NAME}/$(basename "$CURRENT_IMAGE_DIR")" "$LINK_MARKER"
+           touch "$NEW_TREE" # Updates timestamp for the next sorting iteration
+       else
+           echo "  ✗ ERROR while backing up vault $VAULT_NAME!"
+           echo -e "\n------------------------------------------------" >> "$VAULT_LOG"
+           echo "STATUS: FAILED" >> "$VAULT_LOG"
+           #echo "  Notice: Backup tree might be incomplete. Log kept inside directory for analysis."
+           # Don't delete it; instead, mark it as incomplete for the next run. 
+           if [ -d "$NEW_TREE" ]; then
+               mv "$NEW_TREE" "${CURRENT_IMAGE_DIR}/tree.incomplete"
+               echo "  Notice: Incomplete backup saved as 'tree.incomplete' for delta-analysis."
+           fi
+       fi
+    fi 
+    
+    # END-TIMESTAMP (Logged directly inside the isolated rsync.log)
+    echo "End time: $(date '+%Y-%m-%d %H:%M:%S')" >> "$VAULT_LOG"
+    if [ "$DRY_RUN" = "0" ]; then 
+       echo "Log: "$VAULT_LOG
+       ls -l $VAULT_LOG
+       tail -n 4 "$VAULT_LOG"
+       sed -ne "/Number of files:/,$ {p}" $VAULT_LOG
+    else
         echo "------------------------------------------------"
         echo "  [Dry-Run] Simulation finished."
-    fi
+    fi 
+
+    # Always remove the lockfile upon completion or failure handling of this vault
+    rm -f "$LOCK_FILE"
     # Clean up vault-specific temp files
     rm -f "$LOCAL_EXCLUDE_FILE" "$FINAL_EXCLUDE_FILE"
 done

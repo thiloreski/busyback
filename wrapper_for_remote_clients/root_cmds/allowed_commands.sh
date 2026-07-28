@@ -23,10 +23,10 @@ echo ">>${SSH_CONNECTION}<<" >&2
 # skip stdout of the comand?
 SKIP_STDOUT=0
 for i in ${COMMANDS_TO_SKIP_STDOUT[@]}; do
-	FOUND_SKIP_CMMAND=`expr "$SSH_ORIGINAL_COMMAND" : $i`
-	if (( ${FOUND_SKIP_CMMAND} > 0 )) ; then 
-		SKIP_STDOUT=1
-	fi
+        FOUND_SKIP_CMMAND=`expr "$SSH_ORIGINAL_COMMAND" : $i`
+        if (( ${FOUND_SKIP_CMMAND} > 0 )) ; then 
+                SKIP_STDOUT=1
+        fi
 done
 
 #extglob:
@@ -36,39 +36,43 @@ done
 #+(x) or +([x]) means: 1 or more (as x+ in Regex).
 #?(xy) means: 0 or 1 "xy" (as string).
 #*(xy) means: 0 or more of "xy" (as string).
-#+(xy) measn: 1 or more of "xy" (as string).
+#+(xy) means: 1 or more of "xy" (as string).
 #?([xy]) means: 1 or zero of x or y. 
 #+([xy]) means: 1 or more x or y, matches "xy", "xxyy", "xyxyx", ....
 #*([xy]) - got it?
+#@(abc|def|ghi) - exact one of abc, def, or ghi
 
 # the rsync command covers a considerable set of different options by the above extglob espressions.
 # If something is wrong the calling server gets an error like "protokoll Error- is your sheill clean".
-# At the ende of the rsyc command an example for other paths is given
 
 shopt -s extglob
 case "$SSH_ORIGINAL_COMMAND" in
-	rsync\ --server\ --sender\ -*([vnklLH])ogD?(t)p?(A)?(X)r?(x)?(x)e.iL*(s)fxCIvu\ ?(--ignore-errors\ )?(--safe-links\ )?(--numeric-ids\ ).\ \/@(etc|home|dir_at_rooti_level\/subdir1\/subdir2)?(\/) | \
-	"exit"					| \
-	"cat /etc/hosts"					| \
-	"ls -alt /etc" )
-	# "exit" for availability check
-	# "cat" and "ls" for testing
-	if (( ${SKIP_STDOUT} > 0 )) ; then 
-			$SSH_ORIGINAL_COMMAND 
-			RET_CODE=$?
-		else
-			$SSH_ORIGINAL_COMMAND | tee ${STDOUT_LOG_FILE}
-			RET_CODE=$?
-		fi
-		echo "command executed" >&2
-		echo "return code: " $RET_CODE >&2
-		echo "output on stdout (this is the output to stderr)" >&2
-		;;
-	*)
-		echo "Access denied" | tee ${STDOUT_LOG_FILE}
-		echo "Not in the list of allowed commands! Access denied" >&2
-		echo "command not executed" >&2
-		exit 1
-		;;
+        rsync\ --server\ --sender\ -*([vnklLH])ogD?(t)p?(A)?(X)r*(x)e.iL?(s)fxCIvu\ *(--timeout=*([0-9])\ |--ignore-errors\ |--safe-links\ |--numeric-ids\ ).\ \/@(etc|home|other_backup_sources_go_here\/with_subdirs)?(\/) | \
+        "rsync --server -vve.LfxCIvu --log-format=%i . .ssh" | \
+        "rsync --version"                  | \
+        "exit"                             | \
+        "cat /etc/hosts"                   | \
+        "ls -alt /etc"  )                  
+        # "rsync --server -e.LfxCIvu . .ssh" for distributing the allowed_command.sh script
+        # "exit" for availability check
+        # last entries for testing
+        if (( ${SKIP_STDOUT} > 0 )) ; then 
+                        $SSH_ORIGINAL_COMMAND 
+                        RET_CODE=$?
+                else
+                        $SSH_ORIGINAL_COMMAND | tee ${STDOUT_LOG_FILE}
+                        RET_CODE=$?
+                fi
+                echo "command executed" >&2
+                echo "return code: " $RET_CODE >&2
+                echo "output on stdout (this is the output to stderr)" >&2
+                ;;
+        *)
+                echo "Access denied" | tee ${STDOUT_LOG_FILE}
+                echo "Not in the list of allowed commands! Access denied" >&2
+                echo "command not executed" >&2
+                exit 1
+                ;;
 esac
 shopt -u extglob
+

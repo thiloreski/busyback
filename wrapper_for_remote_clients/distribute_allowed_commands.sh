@@ -1,11 +1,10 @@
 #!/bin/sh
 
-# Busyback need an entry in the known hosts file to connect to clients.
-# On first connction , i.e. if ther is no entry for the client the knowin_hosts file, there will be a confirmation prompt
-# if this happens in the cron job, the jpob hangs.
-# This little helper juns through all busyback conf files and does a ssh connection whith single command "exoit" to each found client
-# Answer yes (y) to the prompt, and the client and its host key is inserted into the knpown hosts file (login is not needed)
-# Of coourse only works for reachable clients and also be aware of the forced command wrapper on the cliient
+# Distribute the wrapper around all clients
+# Paths on any client are to be set up in the wrapper and hold for all clients if the script is distributed.
+
+ID_FILE=/etc/dropbear/id_dropbear_backup
+ALLOWED_CMDS=/mnt/OpenWRT_vaults/global_manage/wrapper_for_remote_clients/allowed_commands.sh
 
 # Helper function to read configuration variables (key: value)    
 get_config_var() {                                                
@@ -23,5 +22,11 @@ for i in  /mnt/OpenWRT_vaults/busyback_bank/*/manage/busyback.conf ; do
     PORT="${PORT:-22}"
     USER=$(get_config_var "$i" "user")   
     USER="${USER:-root}"
-    echo ssh -p $PORT -i /etc/dropbear/id_dropbear_backup ${USER}@${CLIENT} exit
+#    echo ssh -p $PORT -i /etc/dropbear/id_dropbear_backup ${USER}@${CLIENT} exit
+#    rsync -e "ssh -i /etc/dropbear/id_dropbear_backup" /mnt/OpenWRT_vaults/global_manage/bin/allowed_commands.sh  root@hawking:.ssh
+#    echo rsync -e \"ssh -p $PORT -i /etc/dropbear/id_dropbear_backup\" -ivv /mnt/OpenWRT_vaults/global_manage/wrapper_for_remote_clients/allowed_commands.sh ${USER}@${CLIENT}:.ssh 
+    echo rsync -e \"ssh -p $PORT -i ${ID_FILE}\" -ivv ${ALLOWED_CMDS} ${USER}@${CLIENT}:.ssh 
 done | sort -u | awk '{ print "calling:>>"$0"<<" ; system($0" </dev/null") }'
+#done | sort -u | grep priser | awk '{ print "calling:>>"$0"<<" ; system($0" </dev/null") }'
+ 
+
