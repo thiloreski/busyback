@@ -27,6 +27,6 @@ for i in  /mnt/OpenWRT_vaults/busyback_bank/*/manage/busyback.conf ; do
 #    echo rsync -e \"ssh -p $PORT -i /etc/dropbear/id_dropbear_backup\" -ivv /mnt/OpenWRT_vaults/global_manage/wrapper_for_remote_clients/allowed_commands.sh ${USER}@${CLIENT}:.ssh 
     echo rsync -e \"ssh -p $PORT -i ${ID_FILE}\" -ivv ${ALLOWED_CMDS} ${USER}@${CLIENT}:.ssh 
 done | sort -u | awk '{ print "calling:>>"$0"<<" ; system($0" </dev/null") }'
-#done | sort -u | grep test_server | awk '{ print "calling:>>"$0"<<" ; system($0" </dev/null") }' # check on one server only
+#done | sort -u | grep priser | awk '{ print "calling:>>"$0"<<" ; system($0" </dev/null") }'
  
 
