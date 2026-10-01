@@ -1,11 +1,18 @@
 #!/bin/sh
 
-for i in /mnt/OpenWRT_vaults/busyback_bank/4TBO* ; do 
+VAULT_LOC=/mnt/OpenWRT_vaults/busyback_bank/
+for i in ${VAULT_LOC}/4TBO* ; do 
    LAST=$(ls -l ${i}/*/last* 2>/dev/null )
    if [ -z "$LAST" ] ; then
       echo "no latest success: "${i##*/}
    fi
 done 
 ls -l $(find /mnt/OpenWRT_vaults/busyback_bank -maxdepth 3 | grep last) | \
-    sed -e "s/^lrwxrwxrwx    1 root     root            [0-9][0-9] //;s/\/mnt\/OpenWRT_vaults\/busyback_bank\/.*\/manage\///" | \
+    sed -e "s/^[^\/]*\//\//;" | \
+    sed -e "s/\(.*\)4TBO.*\.\.\/\.\.\/\([^\/]*\)\/\(.*\)$/\3 \2 xxx\1\2/" | \
+    sed -e "s/^\(.*\)xxx\//\1             /;s/^\(.\{39\}\) */\1 \//" | \
     sort
+#    sed -e "s/^\([^\*]*\)xxxxxxx/\1                                         /" | \
+#    sed -e "s/^(.*)xxx/\1                                          /;s/^(.{39}) */\1/" | \
+#    sed -e "s/^\(.*\)xxx\//\1    /;s/^\(.{39}\) */++++\1++++ \//" | \
+#sed -e "s/^\(.*\)xxx/\1                                          /;s/^\(.\{39\}\) */\1/" | \

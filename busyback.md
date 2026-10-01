@@ -69,7 +69,7 @@ To automate backups securely, setup passwordless authentication using the local 
 
 **1) Authorized Keys:** Append the backup server's public key (e.g., */etc/dropbear/id_dropbear_backup.pub* or *id_rsa.pub*) to the target remote user's (i.e. root or admin user on Windows with cygwin ) *authorized_keys* file.
 
-**2) Known Hosts:** Add backup clients host key to the known hosts file of backup server’s root, best by once calling „ssh \<user\>@\<client\> -p \<port\>“ from command line and answering „yes“ – the host key is added, even if there is no loigin after that .
+**2) Known Hosts:** Add backup clients host key to the known hosts file of backup server’s root, best by once calling „ssh \<user\>@\<client\> -p \<port\>“ from command line and answering „yes“ – the host key is added, even if there is no loigin after that. A little script „build_known_hosts.sh“ in the bin dir does that for all clients in vaults.
 
 **3) Forced Command Wrapper on clients:** busyback may need to run with root rights, e.g. to backup a system folder or a set of folders belonging to several users. To prevent rogue root commands, use the forced command directive and prefix the target *authorized_keys* entry with restricted execution blocks if required by security policies:
 
@@ -87,7 +87,7 @@ Create a mount point „/mnt/OpenWRT_vaults/“ busyback on the backup server. I
 
 #### Backup device
 
-Mount and unlock your backup device. Busyback runs without that, but if you do not have a device, the backup ist stored in the disk space of the backup server, which space may be limitid. If you do not have an encrypted device, your backups will be plain. For testing puposes you can skip mount and unlock. To easy create and unlock a device under busybox see repo „crypto-manage“ in GitHub.
+Unlock and mount your backup device. Busyback runs without that, but if you do not have a device, the backup ist stored in the disk space of the backup server, where space may be limited. If you do not have an encrypted device, your backups will be plain. For testing puposes you can skip mount and unlock. To easy create and unlock a device under busybox see repo „crypto-manage“ in GitHub.
 
 #### Files
 
@@ -95,7 +95,7 @@ Copy the whole structure of the repo into „/mnt/OpenWRT_vaults/manage“.
 
 ##### **Main files:**
 
-###### **C**ore (chmod to executeable)**
+###### **Core (chmod to executeable)**
 
 */mnt/OpenWRT_vaults/global_manage/cdbin/busyback to /usr/bin/busyback*
 
@@ -113,13 +113,13 @@ Copy the whole structure of the repo into „/mnt/OpenWRT_vaults/manage“.
 
 ##### **Other files:**
 
-###### **C**ronjobs stay in OpenWRT_vaults/global_manage**
+###### **Cronjobs stay in OpenWRT_vaults/global_manage**
 
 *busyback_cronjob.sh - core cronjob*
 
 *hourly_cronjob.sh - backup of the config and bin files to a save place*
 
-###### **C**onfiguration file**s** **for vaults**
+###### **Configuration files for vaults**
 
 *These files define client overrides, create one for each backup (see examples and more info below) /mnt/OpenWRT_vaults/busyback-bank\>/\<vault\>/manage/busyback.conf*
 
@@ -160,6 +160,5 @@ Bash
 
 *\# Example open routine (adjust names to your specific environment)*
 
-*crypto-manage open backup_storage go *
-
-### 
+**crypto-manage open backup_storage go**
+ 

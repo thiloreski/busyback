@@ -6,7 +6,7 @@
 
 # busyback - A lightweight backup script in pure shell for busybox (OpenWrt)
 CONFIG_DIR="/etc/busyback"
-MASTER_CONF="${CONFIG_DIR}/master.conf"
+MASTER_CONF="$CONFIG_DIR/master.conf"
 SSH_KEY="/etc/dropbear/id_dropbear_backup"
 
 # Initialize control variables
@@ -18,17 +18,17 @@ INCOMPLETE=incomplete
 # Initialize directory for files in tmp
 TIMESTAMP=$(date +"%Y-%m-%d-%H%M")
 EXCLUDES_DIR="/tmp/busyback.excludes.as.per.${TIMESTAMP}.$$"
-mkdir -p "${EXCLUDES_DIR}"
+mkdir -p "$EXCLUDES_DIR"
 
 # define names for exclude fiels
-GLOBAL_EXCLUDE_FILE="${EXCLUDES_DIR}/global_exclude.txt"
-LOCAL_EXCLUDE_FILE="${EXCLUDES_DIR}/local_exclude.txt"
-FINAL_EXCLUDE_FILE="${EXCLUDES_DIR}/final_exclude.txt"
+GLOBAL_EXCLUDE_FILE="$EXCLUDES_DIR/global_exclude.txt"
+LOCAL_EXCLUDE_FILE="$EXCLUDES_DIR/local_exclude.txt"
+FINAL_EXCLUDE_FILE="$EXCLUDES_DIR/final_exclude.txt"
 
 # Parameter parsing: Check if first argument is a vault or 'go'
 if [ "$1" = "go" ]; then
     DRY_RUN=0
-elif [ "x$1" != "x" ]; then
+elif [ -n "$1" ]; then
     # skip trailing slash
     TARGET_VAULT=$(echo "$1" | sed 's/\/$//')
     # Check if the second argument is 'go'
@@ -38,11 +38,10 @@ elif [ "x$1" != "x" ]; then
 fi
 
 # Inform user about the operational mode
-if [ "${DRY_RUN}" = "1" ]; then
+if [ "$DRY_RUN" = "1" ]; then
     echo "===================================================="
     echo "  [DRY-RUN MODE] - No backups will be created, "
     echo "                   but will create exclude lists (drop at end)"
-    echo "                   ... and process the command wrapper on linux clients like production run..."
     echo "  To run for real, append 'go' to your command."
     echo "===================================================="
 fi
@@ -62,7 +61,7 @@ fi
 # a) Script reaches rsync command - even if the rsync fails, considered as "no error".
 #    Action: calling "cleanup_vault 0" in the script. Vault is consierded to be done. 
 #    If dry run, then nothing, else delete ${LOCK_FILE}
-#    If it is the last vault, then delete ${EXCLUDES_DIR} and remove trap - in script at the end (for dry run and not dry as well).
+#    If it is the last vault delete ${EXCLUDES_DIR} and remove trap - in script at the end (for dry run and not dry as well).
 #    checked
 # b) Fatal error before any vault is processed (vault dir or master.conf missng, etc.).
 #    Action: nothing - exits immediately before first vault loop (for dry run and not dry as well).
@@ -77,28 +76,28 @@ fi
 
 cleanup_vault() {
    local fatal_or_break="$1"
-   if [ "${DRY_RUN}" = "1" ]; then
+   if [ "$DRY_RUN" = "1" ]; then
       if [ "$fatal_or_break" = "1" ]; then
          echo "Fatal error or run broke up"
-         echo "[Dry-Run] would do: rm -rf \"${CURRENT_IMAGE_DIR}\""
+         echo "[Dry-Run] would do: rm -rf \"$CURRENT_IMAGE_DIR\""
       fi
-      echo "[Dry-Run] would do: rm -f \"${LOCK_FILE}\""
+      echo "[Dry-Run] would do: rm -f \"$LOCK_FILE\""
    else
       if [ "$fatal_or_break" = "1" ]; then
-         echo "Fatal error or run broke up, deleting ${CURRENT_IMAGE_DIR}"
-         rm -rf "${CURRENT_IMAGE_DIR}"
+         echo "Fatal error or run broke up, deleting $CURRENT_IMAGE_DIR"
+         rm -rf "$CURRENT_IMAGE_DIR"
       else
          echo "Vault finished"
       fi
-      echo "Deleting \"${LOCK_FILE}\""
-      rm -f "${LOCK_FILE}"
+      echo "Deleting \"$LOCK_FILE\""
+      rm -f "$LOCK_FILE"
    fi
 }
 
 trap_cleanup() {
    echo "exiting"
-   echo "Deleting ${EXCLUDES_DIR}"
-   rm -rf "${EXCLUDES_DIR}" 
+   echo "Deleting $EXCLUDES_DIR"
+   rm -rf "$EXCLUDES_DIR" 
    cleanup_vault 1
    trap '' EXIT INT TERM HUP
    exit
@@ -139,78 +138,78 @@ get_expire_duration() {
     local rules="$2"
     
     # Extract date components using POSIX-compliant method
-    local d_year=$(echo "${backup_date}" | cut -d'-' -f1)
-    local d_month=$(echo "${backup_date}" | cut -d'-' -f2)
-    local d_day=$(echo "${backup_date}" | cut -d'-' -f3)
+    local d_year=$(echo "$backup_date" | cut -d'-' -f1)
+    local d_month=$(echo "$backup_date" | cut -d'-' -f2)
+    local d_day=$(echo "$backup_date" | cut -d'-' -f3)
     
     # Strip leading zeros safely using sed to prevent octal errors in POSIX shell
-    d_month=$(echo "${d_month}" | sed 's/^0//')
-    d_day=$(echo "${d_day}" | sed 's/^0//')
+    d_month=$(echo "$d_month" | sed 's/^0//')
+    d_day=$(echo "$d_day" | sed 's/^0//')
     
     # Fallback if stripping made them empty (e.g. "00")
     d_month="${d_month:-0}"
     d_day="${d_day:-0}"
 
     # Calculate day of week (1=Monday, 7=Sunday) safely via POSIX date or fallback
-    local d_wday=$(date -d "${backup_date}" "+%u" 2>/dev/null)
-    if [ -z "${d_wday}" ] || [ "${d_wday}" -gt 7 2>/dev/null ]; then
+    local d_wday=$(date -d "$backup_date" "+%u" 2>/dev/null)
+    if [ -z "$d_wday" ] || [ "$d_wday" -gt 7 2>/dev/null ]; then
         # Robust fallback: Calculate day of week manually if busybox 'date -d' fails
         # Sakamotos Algorithm (0=Sunday, 1=Monday... 6=Saturday)
-        local y=${d_year}
-        local m=${d_month}
-        if [ ${m} -lt 3 ]; then
+        local y=$d_year
+        local m=$d_month
+        if [ $m -lt 3 ]; then
             y=$((y - 1))
             m=$((m + 12))
         fi
         local t_wday=$(((y + y/4 - y/100 + y/400 + (31*m)/10 + d_day) % 7))
         # Convert to 1=Monday, 7=Sunday to match cron syntax
-        if [ ${t_wday} -eq 0 ]; then d_wday=7; else d_wday=${t_wday}; fi
+        if [ $t_wday -eq 0 ]; then d_wday=7; else d_wday=$t_wday; fi
     fi
 
     # Read rules line by line
-    echo "${rules}" | while read -r line; do
+    echo "$rules" | while read -r line; do
         # Clean line and skip comments or empty lines
-        line=$(echo "${line}" | sed 's/[[:space:]]\+/ /g;s/[[:space:]]*#.*$//') # Strip inline comments and shrink all space sequences to one space
-        [ -z "${line}" ] && continue
+        line=$(echo "$line" | sed 's/[[:space:]]\+/ /g;s/[[:space:]]*#.*$//') # Strip inline comments and shrink all space sequences to one space
+        [ -z "$line" ] && continue
         # Safely extract fields using POSIX cut instead of read-spacing
-        local min=$(echo "${line}" | awk '{print $1}')
-        local hr=$(echo "${line}" | awk '{print $2}')
-        local day=$(echo "{${line}" | awk '{print $3}')
-        local mon=$(echo "${line}" | awk '{print $4}')
-        local wday=$(echo "${line}" | awk '{print $5}')
+        local min=$(echo "$line" | awk '{print $1}')
+        local hr=$(echo "$line" | awk '{print $2}')
+        local day=$(echo "$line" | awk '{print $3}')
+        local mon=$(echo "$line" | awk '{print $4}')
+        local wday=$(echo "$line" | awk '{print $5}')
         
         # Everything from field 7 onwards is the DURATION (e.g. "+2 weeks")
-        local DURATION=$(echo "${line}" | cut -d' ' -f6-)
+        local DURATION=$(echo "$line" | cut -d' ' -f6-)
 
         # Protection: If any essential field is missing, skip to avoid out of range
-        [ -z "${min}" ] || [ -z "${hr}" ] || [ -z "${day}" ] || [ -z "${mon}" ] || [ -z "${wday}" ] || [ -z "${DURATION}" ] && continue
+        [ -z "$min" ] || [ -z "$hr" ] || [ -z "$day" ] || [ -z "$mon" ] || [ -z "$wday" ] || [ -z "$DURATION" ] && continue
 
         # Match Day of Month
-        if [ "${day}" != "*" ] && [ "${day}" != "${d_day}" ]; then continue; fi
+        if [ "$day" != "*" ] && [ "$day" != "$d_day" ]; then continue; fi
         # Match Month
-        if [ "${mon}" != "*" ] && [ "${mon}" != "${d_month}" ]; then continue; fi
+        if [ "$mon" != "*" ] && [ "$mon" != "$d_month" ]; then continue; fi
         # Match Day of Week (handles comma-separated lists like 6,7 or ranges like 1-5)
-        if [ "${wday}" != "*" ]; then
+        if [ "$wday" != "*" ]; then
             local match=0
             
             # Safe range extraction
-            if echo "${wday}" | grep -q "-"; then
-                local w1=$(echo "${wday}" | cut -d'-' -f1)
-                local w2=$(echo "${wday}" | cut -d'-' -f2)
-                if [ "x${w1}" != "x" ] && [ "x${w2}" != "x" ]; then
-                    if [ "${d_wday}" -ge "${w1}" ] && [ "${d_wday}" -le "${w2}" ]; then match=1; fi
+            if echo "$wday" | grep -q "-"; then
+                local w1=$(echo "$wday" | cut -d'-' -f1)
+                local w2=$(echo "$wday" | cut -d'-' -f2)
+                if [ -n "$w1" ] && [ -n "$w2" ]; then
+                    if [ "$d_wday" -ge "$w1" ] && [ "$d_wday" -le "$w2" ]; then match=1; fi
                 fi
             else
                 # List or single day
-                for w in $(echo "${wday}" | tr ',' ' '); do
-                    if [ "${d_wday}" -eq "${w}" ]; then match=1; fi
+                for w in $(echo "$wday" | tr ',' ' '); do
+                    if [ "$d_wday" -eq "$w" ]; then match=1; fi
                 done
             fi
             if [ "$match" -eq 0 ]; then continue; fi
         fi
 
         # Rule matches! Return DURATION string (e.g., "+2 weeks")
-        echo "${DURATION}"
+        echo "$DURATION"
         return 0
     done
 }
@@ -220,29 +219,29 @@ parse_expire_to_days() {
     local input="$1"
     
     # Special Case: "never"
-    if [ "${input}" = "never" ]; then
+    if [ "$input" = "never" ]; then
         echo "99999" # An extremely high value that effectively means “never”^
         return
     fi
 
     # Clean up: Remove “+”, convert everything to lowercase, normalize spaces
     local clean
-    clean=$(echo "${input}" | tr -d '+' | tr 'A-Z' 'a-z' | xargs)
+    clean=$(echo "$input" | tr -d '+' | tr 'A-Z' 'a-z' | xargs)
 
     # Extract the number and unit (e.g., “3” and “weeks”) 
     local value unit
-    value=$(echo "${clean}" | sed 's/[^0-9]//g')
-    unit=$(echo "${clean}" | sed 's/[0-9 ]//g')
+    value=$(echo "$clean" | sed 's/[^0-9]//g')
+    unit=$(echo "$clean" | sed 's/[0-9 ]//g')
 
     # If no unit is specified, we assume days by default.
-    if [ "x${unit}" = "x" ]; then
+    if [ -z "$unit" ]; then
         unit="day"
     fi
 
     # Calculation of days based on the unit
-    case "${uniti}" in
+    case "$unit" in
         day|days)
-            echo "${value}"
+            echo "$value"
             ;;
         week|weeks)
             echo "$((value * 7))"
@@ -271,134 +270,133 @@ trap 'trap_cleanup' EXIT INT TERM HUP
 # 1. Safety check: minimum config existing, backup storage (bank) actually mounted?
 
 # Read global configuration
-if [ ! -f "${MASTER_CONF}" ]; then
-    echo "ERROR: Global configuration ${MASTER_CONF} not found!"
+if [ ! -f "$MASTER_CONF" ]; then
+    echo "ERROR: Global configuration $MASTER_CONF not found!"
     exit 1
 fi
 
-BANK=$(get_config_var "${MASTER_CONF}" "bank")
+BANK=$(get_config_var "$MASTER_CONF" "bank")
 
-if [ "x${BANK}" ="x" ]; then
-    echo "ERROR: Option 'bank' is not defined in ${MASTER_CONF}!"
+if [ -z "$BANK" ]; then
+    echo "ERROR: Option 'bank' is not defined in $MASTER_CONF!"
     exit 1
 fi
 
-BASE_MOUNT=$(echo "${BANK}" | cut -d'/' -f1-3)
+BASE_MOUNT=$(echo "$BANK" | cut -d'/' -f1-3)
 
-if ! mount | grep -q "on ${BASE_MOUNT} "; then
+if ! mount | grep -q "on $BASE_MOUNT "; then
     echo "ERROR: The backup directory (${BANK}) is not mounted!"
     echo "Please run 'crypto-manage' first to open the encrypted storage."
     exit 1
 fi
 
 # 2. Load global configuration
-GLOBAL_PORT=$(get_config_var "${MASTER_CONF}" "port")
-GLOBAL_EXPIRE_RULES=$(get_multiline_list "${MASTER_CONF}" "expire")
-GLOBAL_RSYNC_OPTS=$(get_multiline_list "${MASTER_CONF}" "rsync-options" | tr -d '\n' ) 
-RUNALL=$(get_multiline_list "${MASTER_CONF}" "runall")
+GLOBAL_PORT=$(get_config_var "$MASTER_CONF" "port")
+GLOBAL_EXPIRE_RULES=$(get_multiline_list "$MASTER_CONF" "expire")
+GLOBAL_RSYNC_OPTS=$(get_multiline_list "$MASTER_CONF" "rsync-options" | tr -d '\n' ) 
+RUNALL=$(get_multiline_list "$MASTER_CONF" "runall")
 
 # Extract global excludes directly into our temp file
-get_multiline_list "${MASTER_CONF}" "exclude" > "${GLOBAL_EXCLUDE_FILE}"
+get_multiline_list "$MASTER_CONF" "exclude" > "$GLOBAL_EXCLUDE_FILE"
 
-if [ "${DRY_RUN}" = "0" ]; then
-    mkdir -p "${BANK}"
+if [ "$DRY_RUN" = "0" ]; then
+    mkdir -p "$BANK"
 fi
 
 # If a specific vault was specified, verify it exists
-if [ "x${TARGET_VAULT}" != "x" ]; then
-     if [ ! -d "${BANK}/${TARGET_VAULT}" ] ; then
-       echo -e "\n[ERROR] Vault '${TARGET_VAULT}' does not exist"
+if [ -n "$TARGET_VAULT" ]; then
+     if [ ! -d "$BANK/$TARGET_VAULT" ] ; then
+       echo -e "\n[ERROR] Vault '$TARGET_VAULT' does not exist"
        exit 1  
     fi
-    VAULTS_TO_RUN="${TARGET_VAULT}"
+    VAULTS_TO_RUN="$TARGET_VAULT"
 else
     # Automatic start via master.conf list
-    if [ "x${RUNALL}" = "x" ]; then
-        echo "ERROR: No vaults defined under 'runall:' in ${MASTER_CONF}!"
+    if [ -z "$RUNALL" ]; then
+        echo "ERROR: No vaults defined under 'runall:' in $MASTER_CONF!"
         exit 1
     fi
-    VAULTS_TO_RUN="${RUNALL}"
+    VAULTS_TO_RUN="$RUNALL"
 fi
 
 echo "=== BusyBack: Backup process started ==="
-echo "Main Bank: ${BANK}"
+echo "Main Bank: $BANK"
 echo "Start of global backup: $(date '+%Y-%m-%d %H:%M:%S')"
 
 # Process all defined vaults
-for VAULT_NAME in ${VAULTS_TO_RUN}; do
+for VAULT_NAME in $VAULTS_TO_RUN; do
 
-    printf '%s\n' echo ${VAULTS_TO_RUN} | sed -e "s/${VAULT_NAME}/ --> ${VAULT_NAME}/"
+    # 3. Pre flight checks
+    # Skip empty lines or comments in the list
+    case "$VAULT_NAME" in
+        "#"*|"") continue ;;
+    esac
 
-    if [ "x${VAULT_PATH}" != "x" ] ; then 
-       # second or later vault to be processed ... 
-       echo "Give some time to relieve ...."
-       sleep 15
-    fi
-    VAULT_PATH="${BANK}/${VAULT_NAME}"
+    vault_path="$BANK/$VAULT_NAME"
 
     # Paths for static configuration and the vault-level lockfile
-    MANAGE_DIR="${VAULT_PATH}/manage"
-    BACKUP_CONF="${MANAGE_DIR}/busyback.conf"
-    LOCK_FILE="${VAULT_PATH}/.lock"
+    MANAGE_DIR="$vault_path/manage"
+    BACKUP_CONF="$MANAGE_DIR/busyback.conf"
+    LOCK_FILE="${vault_path}/.lock"
 
-    if [ ! -d "${VAULT_PATH}" ] || [ ! -f "${BACKUP_CONF}" ]; then
-        echo -e "\n[ERROR] Vault '${VAULT_NAME}' does not exist or lacks a ${BACKUP_CONF##*/}! Skipping."
+    if [ ! -d "$vault_path" ] || [ ! -f "$BACKUP_CONF" ]; then
+        echo -e "\n[ERROR] Vault '$VAULT_NAME' does not exist or lacks a ${BACKUP_CONF##*/}! Skipping."
         continue
     fi
 
     echo "#####################################"
-    echo "--- Processing Vault: ${VAULT_NAME} ---"
+    echo "--- Processing Vault: $VAULT_NAME ---"
 
     # CHECK LOCKFILE (Background protection against concurrent runs)
-    if [ "${DRY_RUN}" = "0" ]; then # no shared ressorces for dry run, as the ${EXCLUDES_DIR} has process is in filename.
-       if [ -f "${LOCK_FILE}" ]; then
+    if [ "$DRY_RUN" = "0" ]; then # no shared ressorces for dry run, as the ${EXCLUDES_DIR} has process is in filename.
+       if [ -f "$LOCK_FILE" ]; then
            # Read PID from lockfile for better log output
-           LOCK_PID=$(cat "${LOCK_FILE}" 2>/dev/null)
+           LOCK_PID=$(cat "$LOCK_FILE" 2>/dev/null)
            echo "  ✗ [BLOCKED] Another backup is already running for this vault!"
-           echo "    Lockfile active: ${LOCK_FILE}"
+           echo "    Lockfile active: $LOCK_FILE"
            echo "    Running PID:     ${LOCK_PID:-unknown}"
-           echo "    Skipping vault ${VAULT_NAME} completely."
+           echo "    Skipping vault $VAULT_NAME completely."
            continue
        fi
     fi
 
     TIMESTAMP=$(date +"%Y-%m-%d-%H%M")
-    CURRENT_IMAGE_DIR="${VAULT_PATH}/${TIMESTAMP}"
+    CURRENT_IMAGE_DIR="${vault_path}/${TIMESTAMP}"
 
     # START-TIMESTAMP (Precise logging for the current vault)
     echo "  Start time: $(date '+%Y-%m-%d %H:%M:%S')"
     
     # Create lockfile if in production mode
-    if [ "${DRY_RUN}" = "0" ]; then
-        echo "$$" > "${LOCK_FILE}"
+    if [ "$DRY_RUN" = "0" ]; then
+        echo "$$" > "$LOCK_FILE"
     else
-        echo "  [Dry-Run] Would create lockfile: ${LOCK_FILE}"
+        echo "  [Dry-Run] Would create lockfile: $LOCK_FILE"
     fi
 
     # 4. Load local vault configuration
     # Create a local exclude temp file for this specific vault run
 
-    CLIENT=$(get_config_var "${BACKUP_CONF}" "client")
-    USER=$(get_config_var "${BACKUP_CONF}" "user")
-    WOL_MAC=$(get_config_var "${BACKUP_CONF}" "wol-mac")
-    WOL_NET=$(get_config_var "${BACKUP_CONF}" "wol-net")
-    BACKUP_TREE=$(get_config_var "${BACKUP_CONF}" "tree")
-    LOCAL_RSYNC_OPTS=$(get_multiline_list "${BACKUP_CONF}" "rsync-options" | tr '\n' ' ' )
-    LOCAL_EXPIRE_RULES=$(get_multiline_list "${BACKUP_CONF}" "expire")
-    LOCAL_PORT=$(get_config_var "${BACKUP_CONF}" "port")
+    CLIENT=$(get_config_var "$BACKUP_CONF" "client")
+    USER=$(get_config_var "$BACKUP_CONF" "user")
+    WOL_MAC=$(get_config_var "$BACKUP_CONF" "wol-mac")
+    WOL_NET=$(get_config_var "$BACKUP_CONF" "wol-net")
+    BACKUP_TREE=$(get_config_var "$BACKUP_CONF" "tree")
+    LOCAL_RSYNC_OPTS=$(get_multiline_list "$BACKUP_CONF" "rsync-options" | tr '\n' ' ' )
+    LOCAL_EXPIRE_RULES=$(get_multiline_list "$BACKUP_CONF" "expire")
+    LOCAL_PORT=$(get_config_var "$BACKUP_CONF" "port")
 
     # Extract local excludes into the vault-specific temp file
-    get_multiline_list "${BACKUP_CONF}" "exclude" > "${LOCAL_EXCLUDE_FILE}"
+    get_multiline_list "$BACKUP_CONF" "exclude" > "$LOCAL_EXCLUDE_FILE"
 
     # Retention period priority: Local overrides Global
-    EXPIRE_RULES="${LOCAL_EXPIRE_RULES:-${GLOBAL_EXPIRE_RULES}}"
+    EXPIRE_RULES="${LOCAL_EXPIRE_RULES:-$GLOBAL_EXPIRE_RULES}"
 
     # Port priority: Local overrides Global, Default is 22
-    PORT="${LOCAL_PORT:-${GLOBAL_PORT}}"
+    PORT="${LOCAL_PORT:-$GLOBAL_PORT}"
     PORT="${PORT:-22}"
 
-    if [ "x${BACKUP_TREE}" = "x" ]; then
-        echo "  [WARNING] No 'tree' (source path) defined in ${BACKUP_CONF}. Skipping."
+    if [ -z "${BACKUP_TREE}" ]; then
+        echo "  [WARNING] No 'tree' (source path) defined in $BACKUP_CONF. Skipping."
         cleanup_vault 1
         continue
     fi
@@ -412,24 +410,24 @@ for VAULT_NAME in ${VAULTS_TO_RUN}; do
     # 5. Assemble Rsync options
 
     #RSYNC_OPTS="-aHAXxv --timeout=60 --numeric-ids --stats --delete --itemize-changes"
-    RSYNC_OPTS="-axv --timeout=120 --numeric-ids --stats --delete --itemize-changes"
+    RSYNC_OPTS="-axv --timeout=60 --numeric-ids --stats --delete --itemize-changes"
     
-    RSYNC_OPTS="${RSYNC_OPTS} --partial-dir=.rsync-partial"
+    RSYNC_OPTS="$RSYNC_OPTS --partial-dir=.rsync-partial"
     # Merge global and local excludes into a single file for rsync
-    cat "${GLOBAL_EXCLUDE_FILE}" "${LOCAL_EXCLUDE_FILE}" > "${FINAL_EXCLUDE_FILE}"
+    cat "$GLOBAL_EXCLUDE_FILE" "$LOCAL_EXCLUDE_FILE" > "$FINAL_EXCLUDE_FILE"
     # Excludes using --exclude-from
-    RSYNC_OPTS="${RSYNC_OPTS} --exclude-from=${FINAL_EXCLUDE_FILE}"
+    RSYNC_OPTS="$RSYNC_OPTS --exclude-from=$FINAL_EXCLUDE_FILE"
 
     # Note: rsync uses a "last-match" evaluation strategy. 
     # Since local options are appended after the master options, 
     # the last option wins and local settings will override the master.
-    RSYNC_OPTS="${RSYNC_OPTS} ${GLOBAL_RSYNC_OPTS} ${LOCAL_RSYNC_OPTS}"
+    RSYNC_OPTS="$RSYNC_OPTS $GLOBAL_RSYNC_OPTS $LOCAL_RSYNC_OPTS"
      
     # IMPORTANT: Clear the SSH variable for this loop iteration
     unset RSYNC_RSH
 
     # 6. LOCAL OR REMOTE BACKUP?
-    if [ "x${CLIENT}" = "x" ] || [ "${CLIENT}" = "localhost" ]; then
+    if [ -z "$CLIENT" ] || [ "$CLIENT" = "localhost" ]; then
         # Local backup
         if [ ! -d "${BACKUP_TREE}" ]; then  
             echo "  [WARNING] Local path '${BACKUP_TREE}' does not exist. Skipping."
@@ -441,61 +439,61 @@ for VAULT_NAME in ${VAULTS_TO_RUN}; do
     else
         # REMOTE REACHABILITY CHECK & WAKE-ON-LAN (ssh in case the client is stealth against pings WOL to wake up window stations)
         # Use the official rsync environment variable for SSH configuration
-        export RSYNC_RSH="dbclient -K 30 -p ${PORT} -i ${SSH_KEY}"
-        echo "  Checking reachability of server [${CLIENT}:${PORT}]..."
+        export RSYNC_RSH="dbclient -K 10 -p $PORT -i $SSH_KEY"
+        echo "  Checking reachability of server [$CLIENT:$PORT]..."
         # old, instead of ping use ssh:
         # -c 2 sends two pings, -W 2 waits a maximum of 2 seconds for a response
-        # if ! ping -c 2 -W 2 "${CLIENT}" > /dev/null 2>&1; then
+        # if ! ping -c 2 -W 2 "$CLIENT" > /dev/null 2>&1; then
 	SECS=15
-        if ! socat -t ${SECS} - EXEC:"ssh -p ${PORT} -q -i /etc/dropbear/id_dropbear_backup ${BACKUP_USER}@${CLIENT} exit" 2>&1 ; then
+        if ! socat -t ${SECS} - EXEC:"ssh -p $PORT -q -i /etc/dropbear/id_dropbear_backup ${BACKUP_USER}@${CLIENT} exit" 2>&1 ; then
            # if both WOL_MAC and WOL_NET set, the config determines a wol shot cross network segmets
-           if [ "x${WOL_MAC}" = "!x" ] && [ "x${WOL_NET}" != "x" ]; then
+           if [ -n "$WOL_MAC" ] && [ -n "$WOL_NET" ]; then
               echo "  [WoL] WOL_MAC and WOL_NET set => Windows station not answering - trying to wakeup..."
               echo "  [WoL] ... Works only if connected via cable to an RJ45 socket and enabeled in BIOS"
               echo "  [WoL] ... Wake up is executed on dry-run also !!!! Does not change anything on disk except status info of the station"
-              echo "  [WoL] Checking standby target in subnet: ${WOL_NET}"
-              echo "  [WoL] Sending Directed Broadcast to ${WOL_NET} using MAC ${WOL_MAC}..."
+              echo "  [WoL] Checking standby target in subnet: $WOL_NET"
+              echo "  [WoL] Sending Directed Broadcast to $WOL_NET using MAC $WOL_MAC..."
 
               ## Example fo socat, creates the magic Packet  (6x FF + 16x MAC adress)
               #MAC="00:11:22:33:44:55"
-              #HEX="ffffffffffff$(echo ${MAC} | tr -d : | sed 's/../&/g' | awk '{for(i=1;i<=16;i++) printf $0}')"
+              #HEX="ffffffffffff$(echo $MAC | tr -d : | sed 's/../&/g' | awk '{for(i=1;i<=16;i++) printf $0}')"
               ## Socat sendet es als UDP-Broadcast an Port 9
-              #echo -n -e "$(echo ${HEX} | sed 's/../\\x&/g')" | socat - UDP4-DATAGRAM:255.255.255.255:9,broadcast
+              #echo -n -e "$(echo $HEX | sed 's/../\\x&/g')" | socat - UDP4-DATAGRAM:255.255.255.255:9,broadcast
 
               # Format MAC address (remove colons) and generate the 102-byte Magic Packet
-              CLEAN_MAC=$(echo "${WOL_MAC}" | tr -d ':')
-              FORMATTED_MAC=$(echo "${CLEAN_MAC}" | sed 's/\(..\)/\\x\1/g')
+              CLEAN_MAC=$(echo "$WOL_MAC" | tr -d ':')
+              FORMATTED_MAC=$(echo "$CLEAN_MAC" | sed 's/\(..\)/\\x\1/g')
 
               # Construct the 102-byte Magic Packet layout (6x \xFF followed by 16x MAC)
-              MAGIC_PACKET=$(printf '\\xff%.0s' {1..6}; printf "${FORMATTED_MAC}%.0s" {1..16})
+              MAGIC_PACKET=$(printf '\\xff%.0s' {1..6}; printf "$FORMATTED_MAC%.0s" {1..16})
 
 
               # Broadcast the magic packet via UDP port 9 using socat
-              echo -n "${MAGIC_PACKET}" | socat - UDP4-DATAGRAM:"${WOL_NET}":9,broadcast
+              echo -n "$MAGIC_PACKET" | socat - UDP4-DATAGRAM:"$WOL_NET":9,broadcast
 
               echo "  [WoL] Packet transmitted. Waiting 45 seconds for system boot..."
               sleep 45
-              if ! socat -t 5 - EXEC:"ssh -p ${PORT} -q -i /etc/dropbear/id_dropbear_backup ${BACKUP_USER}@${CLIENT} exit" 2>&1 ; then
-                 echo "  ✗ [ERROR] Server ${CLIENT} is not reachable (WIN Client - wol and wait 45 sec, still no answer to ssh for ${SECS} secs )!"
-                 echo "    Skipping vault ${VAULT_NAME} completely."
+              if ! socat -t 5 - EXEC:"ssh -p $PORT -q -i /etc/dropbear/id_dropbear_backup ${BACKUP_USER}@${CLIENT} exit" 2>&1 ; then
+                 echo "  ✗ [ERROR] Server $CLIENT is not reachable (WIN Client - wol and wait 45 sec, still no answer to ssh for ${SECS} secs )!"
+                 echo "    Skipping vault $VAULT_NAME completely."
                  cleanup_vault 1
                  continue
               fi
            else
-              echo "  ✗ [ERROR] Server ${CLIENT} is not reachable (no answer to ssh for ${SECS} secs - no WOL defined - will not try to wake up client)!"
-              echo "    Skipping vault ${VAULT_NAME} completely."
+              echo "  ✗ [ERROR] Server $CLIENT is not reachable (no answer to ssh for ${SECS} secs - no WOL defined - will not try to wake up client)!"
+              echo "    Skipping vault $VAULT_NAME completely."
               cleanup_vault 1
               continue
            fi
         fi
         # Assemble remote source path using dynamically determined user
         SRC_PATH="${BACKUP_USER}@${CLIENT}:${BACKUP_TREE}"
-        echo "  ✓ Server online. Type: Remote Backup via SSH (User: ${BACKUP_USER})"
+        echo "  ✓ Server online. Type: Remote Backup via SSH (User: $BACKUP_USER)"
     fi
-    # Dynamic element paths within the ${TIMESTAMP} directory
-    NEW_TREE="${CURRENT_IMAGE_DIR}/${TREE}"
-    if [ "${DRY_RUN}" = "0" ]; then 
-       VAULT_LOG="${CURRENT_IMAGE_DIR}/rsync.log"
+    # Dynamic element paths within the $TIMESTAMP directory
+    NEW_TREE="$CURRENT_IMAGE_DIR/${TREE}"
+    if [ "$DRY_RUN" = "0" ]; then 
+       VAULT_LOG="$CURRENT_IMAGE_DIR/rsync.log"
     else
        VAULT_LOG="/dev/stdout"
     fi 
@@ -526,27 +524,42 @@ for VAULT_NAME in ${VAULTS_TO_RUN}; do
     if [ -L "${LINK_MARKER}" ] && [ -d "${LINK_MARKER}/${TREE}" ]; then
        LATEST_IMAGE=$(readlink -f "${LINK_MARKER}")
        echo "  [REF] Found valid last successful run via symlink."
-       echo "  Using hardlinks via central symlink: $(basename "${LATEST_IMAGE}")/${TREE}"
+       echo "  Using hardlinks via central symlink: $(basename ${LATEST_IMAGE})/${TREE}"
+       #echo "  Using hardlinks via central symlink(wqm): $(basename \"${LATEST_IMAGE}\")/${TREE}" so ist es falsch....
+       echo "  Using hardlinks via central symlink(wqmns): $(basename "${LATEST_IMAGE}")/${TREE}"
        REF_TREE="${LATEST_IMAGE}/${TREE}"
        REF_OPT="--link-dest"
     else
        # Strategy B: Find youngest successful via proper log 
        echo "  [REF] Symlink invalid/missing. Searching filesystems..."
        # Scan paths
-       IMAGES_REVERSE=$(find "${VAULT_PATH}" -mindepth 1 -maxdepth 1 -type d ! -name "manage" | sort -r)
-       for IMG_DIR in ${IMAGES_REVERSE}; do
-           # Run through all images and find the first with "STATUS for ${VAULT_NAME}: SUCCESSFUL"
+       IMAGES_REVERSE=$(find "$vault_path" -mindepth 1 -maxdepth 1 -type d ! -name "manage" | sort -r)
+       for IMG_DIR in $IMAGES_REVERSE; do
+           # Run through all images and find the first with "STATUS: SUCCESSFUL"
            # Skip the current run directory if it already exists
-           [ "$(basename \"${IMG_DIR}\")" = "${TIMESTAMP}" ] && continue
-           # If we have a ${REF_TREE} -> all done
-           if [ "x${REF_TREE}" = "x" ] ; then # ${REF_TREE} still empty!
-              if [ -f "${IMG_DIR}/rsync.log" ] && grep -q "STATUS for ${VAULT_NAME}: SUCCESSFUL" "${IMG_DIR}/rsync.log"; then
-                 echo "  [REF] Healed symlink to last successful run: $(basename "${IMG_DIR}")"
-                 if [ "${DRY_RUN}" = "0" ]; then
+           [ "$(basename \"${IMG_DIR}\")" = "$TIMESTAMP" ] && continue
+           # If we have a $REF_TREE -> all done
+           if [ "x$REF_TREE" = "x" ] ; then # $REF_TREE still empty!
+              if [ -f "${IMG_DIR}/rsync.log" ] && grep -q "STATUS: SUCCESSFUL" "${IMG_DIR}/rsync.log"; then
+                 echo "  [REF] Healed symlink to last successful run: $(basename ${IMG_DIR})"
+                 echo "  [REF] Healed symlink to last successful run(wqm): $(basename \"${IMG_DIR}\")"
+                 echo "  [REF] Healed symlink to last successful run(wqmns): $(basename "${IMG_DIR}")"
+                 if [ "$DRY_RUN" = "0" ]; then
                     rm -f "${LINK_MARKER}"
+set -xv
+                    ln -s "../../${VAULT_NAME}/$(basename "${IMG_DIR}")" "${LINK_MARKER}"
+                    ls -alt "${LINK_MARKER}"
+                    ls -alt ${LINK_MARKER}
+                    ln -s "../../${VAULT_NAME}/$(basename ${IMG_DIR})" "${LINK_MARKER}"
+                    ls -alt "${LINK_MARKER}"
+                    ls -alt ${LINK_MARKER}
+                    ln -s "../../${VAULT_NAME}/$(basename \"${IMG_DIR}\")" "${LINK_MARKER}"
+                    ls -alt "${LINK_MARKER}"
+                    ls -alt ${LINK_MARKER}
+set +xv
                  else
-                    echo "  [Dry-Run] would do: rm -f \"${LINK_MARKER}\""
-                    echo "  [Dry-Run] would do: ln -s \"../../${VAULT_NAME}/$(basename \"${IMG_DIR}\")\" \"${LINK_MARKER}\""
+                    echo "  [Dry-Run] would do: rm -f \"$LINK_MARKER\""
+                    echo "  [Dry-Run] would do: ln -s \"../../${VAULT_NAME}/$(basename \"${IMG_DIR}\")\" \"$LINK_MARKER\""
                  fi
                  REF_TREE="${IMG_DIR}/${TREE}"
                  REF_OPT="--link-dest"
@@ -554,27 +567,27 @@ for VAULT_NAME in ${VAULTS_TO_RUN}; do
               fi
            fi
        done
-       if [ "x${REF_TREE}" = "x" ] ; then # ${REF_TREE} still empty! 
+       if [ "x$REF_TREE" = "x" ] ; then # $REF_TREE still empty! 
           # Strategy C: Fallback - Scan for the youngest broken backup that has incomplete data
           # If NO successful backup exists, find an incomplete and preserve
-          for IMG_DIR in ${IMAGES_REVERSE}; do
+          for IMG_DIR in $IMAGES_REVERSE; do
              if [ -f "${IMG_DIR}/rsync.log" ] ; then
-                 # this backup has at least a rsync.log, but w/o "STATUS for ${VAULT_NAME}: SUCCESSFUL" (else above conditions fired) 
+                 # this backup has at least a rsync.log, but w/o "STATUS: SUCCESSFUL" (else above conditions fired) 
                  if [ -d "${IMG_DIR}/${TREE}" ] || [ -d "${IMG_DIR}/${TREE}.${INCOMPLETE}" ]; then
                     if [ "x${PRESERVED_INCOMPLETE}" = "x" ]; then
-                       # We have neither a ${REF_TREE} nor a ${PRESERVED_INCOMPLETE} and here is the first w/o "STATUS for ${VAULT_NAME}: SUCCESSFUL".
+                       # We have neither a $REF_TREE nor a $PRESERVED_INCOMPLETE and here is the first w/o "STATUS: SUCCESSFUL".
                        # Thus, this is the first, i.e. YOUNGEST broken backup. Protect it!
                        PRESERVED_INCOMPLETE="${IMG_DIR}"
-                       if [ "${DRY_RUN}" = "0" ]; then
+                       if [ "$DRY_RUN" = "0" ]; then
                           if [ -d "${IMG_DIR}/${TREE}" ] ; then
                              mv "${IMG_DIR}/${TREE}" "${IMG_DIR}/${TREE}.${INCOMPLETE}"
                           fi
                        else
-                          echo "  [Dry-Run] [PRESERVE] Would protect youngest broken backup as ${TREE}.${INCOMPLETE} $(basename "${IMG_DIR}"):"
+                          echo "  [Dry-Run] [PRESERVE] Would protect youngest broken backup as ${TREE}.${INCOMPLETE} $(basename \"${IMG_DIR}\"):"
                           echo "        mv \"${IMG_DIR}/${TREE}\" \"${IMG_DIR}/${TREE}.${INCOMPLETE}\""
                        fi
                        echo "  [PRESERVE] Kept youngest incomplete backup as delta-base: $(basename \"${IMG_DIR}\")"
-                       echo "  [REF] WARNING: No successful backup found. Using preserved (i.e. youngest incomplete) backup: $(basename "${PRESERVED_INCOMPLETE}")"
+                       echo "  [REF] WARNING: No successful backup found. Using preserved (i.e. youngest incomplete) backup: $(basename \"${PRESERVED_INCOMPLETE}\")  xxx"
                        echo "  Applying safe --compare-dest mirroring (No blind hardlinks)."
                        # The script correctly switches here to --compare-dest with the path to ${TREE}.${INCOMPLETE}.
                        #     This is a deliberate safety measure:
@@ -586,41 +599,49 @@ for VAULT_NAME in ${VAULTS_TO_RUN}; do
                        REF_TREE=${IMG_DIR}/${TREE}.${INCOMPLETE}
                        REF_OPT="--compare-dest"
                     else
-set -xv
                        # We have ${PRESERVED_INCOMPLETE} already, thus this is an OLDER broken backup. Delete it!
-                       if [ "${DRY_RUN}" = "0" ]; then
-                           echo "  [CLEAN] Removing older broken backup: $(basename "${IMG_DIR}")"
+                       if [ "$DRY_RUN" = "0" ]; then
+                           echo "  [CLEAN] Removing older broken backup: $(basename ${IMG_DIR})"
+                           echo "  [CLEAN] Removing older (wqm) broken backup: $(basename \"${IMG_DIR}\")"
+                           echo "  [CLEAN] Removing older (wqmns) broken backup: $(basename "${IMG_DIR}")"
                            rm -rf "${IMG_DIR}"
                        else
-                           echo "  [Dry-Run] [CLEAN] Would remove older broken backup: $(basename "${IMG_DIR}")"
+                           echo "  [Dry-Run] [CLEAN] Would remove older broken backup: $(basename ${IMG_DIR})"
+                           echo "  [Dry-Run] [CLEAN] Would remove older (wqm) broken backup: $(basename \"${IMG_DIR}\")"
+                           echo "  [Dry-Run] [CLEAN] Would remove older (wqmns) broken backup: $(basename "${IMG_DIR}")"
                        fi
-set +xv
                     fi
                 else
-set -xv
                    # No ${TREE} dir found inside, just trash
-                   if [ "${DRY_RUN}" = "0" ]; then
-                      echo "  [CLEAN] Removing empty/corrupt directory (no tree inside): $(basename "${IMG_DIR}")"
+                   if [ "$DRY_RUN" = "0" ]; then
+                      echo "  [CLEAN] Removing empty/corrupt directory (no tree inside): $(basename ${IMG_DIR})"
+                      echo "  [CLEAN] Removing empty/corrupt (wqmns) directory (no tree inside): $(basename "${IMG_DIR}")"
+                      echo "  [CLEAN] Removing empty/corrupt (wqm) directory (no tree inside): $(basename \"${IMG_DIR}\")"
                       rm -rf "${IMG_DIR}"
                    else
-                      echo "  [Dry-Run] [CLEAN] Would remove empty/corrupt directory: $(basename "${IMG_DIR}"): rm -rf \"${IMG_DIR}\""
+                      echo "  [Dry-Run] [CLEAN] Would remove empty/corrupt directory: $(basename ${IMG_DIR}): rm -rf \"${IMG_DIR}\""
+                      echo "  [Dry-Run] [CLEAN] Would remove (wqmns) empty/corrupt directory: $(basename "${IMG_DIR}"): rm -rf \"${IMG_DIR}\""
+                      echo "  [Dry-Run] [CLEAN] Would remove (wqm) empty/corrupt directory: $(basename \"${IMG_DIR}\"): rm -rf \"${IMG_DIR}\""
                    fi
-set +xv
                 fi
              else
                 # No log file found inside, just trash
-                if [ "${DRY_RUN}" = "0" ]; then
-                    echo "  [CLEAN] Removing empty/corrupt directory (no rsync.log found): $(basename "${IMG_DIR}")"
+                if [ "$DRY_RUN" = "0" ]; then
+                    echo "  [CLEAN] Removing empty/corrupt directory (no rsync.log found): $(basename ${IMG_DIR})"
+                    echo "  [CLEAN] Removing empty/corrupt (wqmns) directory (no rsync.log found): $(basename "${IMG_DIR}")"
+                    echo "  [CLEAN] Removing empty/corrupt (wqm) directory (no rsync.log found): $(basename \"${IMG_DIR}\")"
                     rm -rf "${IMG_DIR}"
                 else
-                    echo "  [Dry-Run] [CLEAN] Would remove empty/corrupt directory: $(basename "${OLD_IMG}"): rm -rf \"${IMG_DIR}\""
+                    echo "  [Dry-Run] [CLEAN] Would remove empty/corrupt directory: $(basename $OLD_IMG): rm -rf \"${IMG_DIR}\""
+                    echo "  [Dry-Run] [CLEAN] Would remove (wqmns) empty/corrupt directory: $(basename "$OLD_IMG"): rm -rf \"${IMG_DIR}\""
+                    echo "  [Dry-Run] [CLEAN] Would remove (wqm) empty/corrupt directory: $(basename \"$OLD_IMG\"): rm -rf \"${IMG_DIR}\""
                 fi
              fi
           done # running through old images and searching for the ypougest broken backup - also cleaning old or trash images
-       fi # We found a reference image alread and stored it in ${REF_TREE} 
+       fi # We found a reference image alread and stored it in $REF_TREE 
     fi # We completed the easiest case, found a link to the latest successfull backup image
-    # if anything worked than we can set ${COMPLETE_REF_OPT}
-    if [ "x${REF_TREE}" != "x" ] ; then
+    # if anything worked than we can set $COMPLETE_REF_OPT
+    if [ "x$REF_TREE" != "x" ] ; then
        COMPLETE_REF_OPT="${REF_OPT}=${REF_TREE}"
     fi
     # === END OF CLEAN AND PRESERVE BROKEN BACKUPS IF NO SUCCESSFIL BACKUP FOUND, FIND A TREE.INCOMPLETE ===
@@ -629,41 +650,41 @@ set +xv
     echo "  Checking for expired backups..."
     
     # Default fallback rule if nothing is defined anywhere: keep everything for 2 weeks
-    if [ "x${EXPIRE_RULES}" = "x" ]; then
+    if [ -z "$EXPIRE_RULES" ]; then
         EXPIRE_RULES="* * * * * +2 weeks"
     fi
 
     # Loop through all existing timestamp directories in this vault
-    IMAGES=$(find "${VAULT_PATH}" -mindepth 1 -maxdepth 1 -type d ! -name "manage" | sort)
-    for IMG_DIR in ${IMAGES} ; do 
+    IMAGES=$(find "$vault_path" -mindepth 1 -maxdepth 1 -type d ! -name "manage" | sort)
+    for IMG_DIR in $IMAGES ; do 
         IMG_NAME=$(basename ${IMG_DIR})
         # Extract date string (YYYY-MM-DD) from the folder name
         IMG_DATE=$(echo "${IMG_NAME}" | cut -d'-' -f1-3)
         # Get matching rule DURATION (e.g. "+2 weeks", "+1 year")
-        DURATION=$(get_expire_duration "${IMG_DATE}" "${EXPIRE_RULES}")
-        echo "${IMG_DATE}", "${DURATION}"
+        DURATION=$(get_expire_duration "$IMG_DATE" "$EXPIRE_RULES")
+        echo "$IMG_DATE", "$DURATION"
         # set file globbing to off in order not to expand "*"s when echoing variable w/o '"'
         # set -f
-        # echo ${IMG_DATE}, ${DURATION}, ${EXPIRE_RULES}
+        # echo $IMG_DATE, $DURATION, $EXPIRE_RULES
         # set file globbing back to on for normal use
         # set +f
-        if [ "x${DURATION}" != "x" ]; then
+        if [ -n "$DURATION" ]; then
             # Calculate the exact expiration threshold date
             # We determine if the backup's creation date plus its allowed DURATION is older than TODAY
-            IMG_TIME=$(date -d "${IMG_DATE}" +"%s")
+            IMG_TIME=$(date -d "$IMG_DATE" +"%s")
             CUR_TIME=$(date +%s)
-            DAYS_TO_KEEP=$(parse_expire_to_days "${DURATION}")
+            DAYS_TO_KEEP=$(parse_expire_to_days "$DURATION")
             # Calculating the expiration time (1 day = 86,400 seconds)
             EXP_TIME=$((IMG_TIME + (DAYS_TO_KEEP * 86400)))
-            if [ "${EXP_TIME}" -le "${CUR_TIME}" ]; then
-		if [ "${IMG_DIR}/${TREE}" = "${REF_TREE}" ] || [ "${IMG_DIR}/${TREE}.${INCOMPLETE}" = "${REF_TREE}" ] ; then 
-                   echo "  [EXPIRE] Backup ${IMG_NAME} has expired (Rule: ${DURATION}). But is the reference image for next backup (${REF_TREE}), NOT removing..."
+            if [ "$EXP_TIME" -le "$CUR_TIME" ]; then
+		if [ "${IMG_DIR}/${TREE}" = "$REF_TREE" ] || [ "${IMG_DIR}/${TREE}.${INCOMPLETE}" = "$REF_TREE" ] ; then 
+                   echo "  [EXPIRE] Backup ${IMG_NAME} has expired (Rule: $DURATION). But is the reference image for next backup ($REF_TREE), NOT removing..."
                 else 
-                   echo "  [EXPIRE] Backup ${IMG_NAME} has expired (Rule: ${DURATION}). Removing..."
-                   if [ "${DRY_RUN}" = "0" ]; then
+                   echo "  [EXPIRE] Backup ${IMG_NAME} has expired (Rule: $DURATION). Removing..."
+                   if [ "$DRY_RUN" = "0" ]; then
                       rm -rf "${IMG_DIR}"
                    else
-                      echo "  [Dry-Run] [EXPIRE] Would remove expired backup: ${IMG_NAME} (Rule: ${DURATION}): rm -rf \"${IMG_DIR}\""
+                      echo "  [Dry-Run] [EXPIRE] Would remove expired backup: ${IMG_NAME} (Rule: $DURATION): rm -rf \"${IMG_DIR}\""
                    fi
                 fi
             fi
@@ -673,113 +694,115 @@ set +xv
     # === END OF EXPIRE LOGIC ===
 
     
-    if [ "x${REF_TREE}" = "x" ] ; then
+    if [ "x$REF_TREE" = "x" ] ; then
         echo "  [REF] Notice: No previous base found. Performing a complete new full backup."
     fi
 
     # 9. Execute backup
-    echo "  Backing up source path ${SRC_PATH} to ${TIMESTAMP}/${TREE}"
+    echo "  Backing up source path $SRC_PATH to $TIMESTAMP/${TREE}"
     echo "-----------------------------------------------------"
 
-    echo "  SRC_PATH: ${SRC_PATH}"
-    echo "  NEW_TREE: ${NEW_TREE}"
+    echo "  SRC_PATH: $SRC_PATH"
+    echo "  NEW_TREE: $NEW_TREE"
     echo "  RSYNC_RSH: ${RSYNC_RSH:-none}"
-    echo "  RSYNC_OPTS: ${RSYNC_OPTS}"
+    echo "  RSYNC_OPTS: $RSYNC_OPTS"
 
     echo "-----------------------------------------------------"
     echo "Active Excludes for this run:"
     cat ${FINAL_EXCLUDE_FILE} | sed -e "s/^/\"/;s/$/\"/" | tr '\n' ' ' ; echo
     echo "-----------------------------------------------------"
 
-    if [ "${DRY_RUN}" = "1" ]; then
-       #echo "  [Dry-Run] Created image dir: ${NEW_TREE} but will delete later (rsync target dir has to exist for dry run)"
-       #mkdir -p "${NEW_TREE}"
-       echo "  [Dry-Run] Would create image dir: ${CURRENT_IMAGE_DIR}"
-       DRY="--dry-run"
-       # new rsync version throws error n dry run when target dir does not exist - just filter these error mgsgs out
-       FILTER_ERROR_OUT=" | grep -v \"failed: No such file or directory (2)\""
-       echo "  [Dry-Run] Executing live simulation on screen ("${DRY}"):"
-       echo "-----------------------------------------------------"
-   else
+    if [ "$DRY_RUN" = "0" ]; then
        DRY=
-       FILTER_ERROR_OUT=
-       mkdir -p "${NEW_TREE}"
+       mkdir -p "$NEW_TREE"
+    else
+       echo "  [Dry-Run] Would create image dir: $CURRENT_IMAGE_DIR"
+       DRY="-n"
+       echo "  [Dry-Run] Executing live simulation on screen (-n):"
+       echo "-----------------------------------------------------"
     fi 
     # Initialize log header in the timestamp directory
-    echo "=== RSYNC BACKUP LOG FOR VAULT ${VAULT_NAME} ===" > "${VAULT_LOG}"
-    echo "Start time: $(date '+%Y-%m-%d %H:%M:%S')" >> "${VAULT_LOG}"
-    echo "Source:     ${SRC_PATH}" >> "${VAULT_LOG}"
+    echo "=== RSYNC BACKUP LOG FOR VAULT $VAULT_NAME ===" > "$VAULT_LOG"
+    echo "Start time: $(date '+%Y-%m-%d %H:%M:%S')" >> "$VAULT_LOG"
+    echo "Source:     $SRC_PATH" >> "$VAULT_LOG"
     # log excludes 
-    echo "------------------------------------------------" >> "${VAULT_LOG}"
-    echo "Active Excludes for this run:" >> "${VAULT_LOG}"
-    (cat ${FINAL_EXCLUDE_FILE} | sed -e "s/^/\"/;s/$/\"/" | tr '\n' ' ' ; echo ) >> "${VAULT_LOG}"
-    echo "------------------------------------------------" >> "${VAULT_LOG}"
+    echo "------------------------------------------------" >> "$VAULT_LOG"
+    echo "Active Excludes for this run:" >> "$VAULT_LOG"
+    (cat ${FINAL_EXCLUDE_FILE} | sed -e "s/^/\"/;s/$/\"/" | tr '\n' ' ' ; echo ) >> "$VAULT_LOG"
+    echo "------------------------------------------------" >> "$VAULT_LOG"
 
-    # rsync writes directly into ${TIMESTAMP}/rsync.log or, if dry, stdout
-    CMD="(rsync ${DRY} ${RSYNC_OPTS} ${COMPLETE_REF_OPT} ${SRC_PATH} \"${NEW_TREE}\") 2>&1"
-    echo ${CMD} ${FILTER_ERROR_OUT} >> "${VAULT_LOG}"  
-    eval ${CMD} ${FILTER_ERROR_OUT} >> "${VAULT_LOG}"  
-    #eval "${CMD}" >> "${VAULT_LOG}" 2>&1  
+    # rsync writes directly into $TIMESTAMP/rsync.log or, if dry, stdout
+    CMD="rsync ${DRY} $RSYNC_OPTS $COMPLETE_REF_OPT $SRC_PATH \"$NEW_TREE\""
+    echo ${CMD} >> "$VAULT_LOG" 2>&1
+    eval "$CMD" >> "$VAULT_LOG" 2>&1  
     # Immediately store the rsync exit code in a variable 
     STATUS=$?
-    echo "rsync exit status: ${STATUS}"
+    echo "rsync exit status: $STATUS"
 
     # If everything went smoothly or ONLY temporary files were deleted (Code 24)
-    if [ "${DRY_RUN}" = "0" ]; then 
-       if [ ${STATUS} -eq 0 ] || [ ${STATUS} -eq 24 ]; then
-           echo "  ✓ Vault ${VAULT_NAME} successfully backed up."
+    if [ "$DRY_RUN" = "0" ]; then 
+       if [ $STATUS -eq 0 ] || [ $STATUS -eq 24 ]; then
+           echo "  ✓ Vault $VAULT_NAME successfully backed up."
            echo "  Archiving backup configuration..."
-           cp "${FINAL_EXCLUDE_FILE}" "${CURRENT_IMAGE_DIR}/excludes"
+           cp "$FINAL_EXCLUDE_FILE" "$CURRENT_IMAGE_DIR/excludes"
            # --- Generate index for fast lookup ---
            echo "  Generating backup index..."
            # Format: Inode | Size | Relative Path (starting from ${TREE}/)
            # create tmp index file
-           TEMP_IDX="${CURRENT_IMAGE_DIR}/index.tmp"
-           > "${TEMP_IDX}"
+           TEMP_IDX="$CURRENT_IMAGE_DIR/index.tmp"
+           > "$TEMP_IDX"
 
            # 1. Directories (type 'd')
-           (cd "${CURRENT_IMAGE_DIR}/${TREE}" && find . -type d -exec ls -id {} \;) | awk '{print $1 "|4096|d|" substr($0, index($0, $2))}' >> "${TEMP_IDX}"
+           (cd "$CURRENT_IMAGE_DIR/${TREE}" && find . -type d -exec ls -id {} \;) | awk '{print $1 "|4096|d|" substr($0, index($0, $2))}' >> "$TEMP_IDX"
    
            # 2. Symlinks (type 'l')
-           (cd "${CURRENT_IMAGE_DIR}/${TREE}" && find . -type l -exec ls -id {} \;) | awk '{print $1 "|0|l|" substr($0, index($0, $2))}' >> "${TEMP_IDX}"
+           (cd "$CURRENT_IMAGE_DIR/${TREE}" && find . -type l -exec ls -id {} \;) | awk '{print $1 "|0|l|" substr($0, index($0, $2))}' >> "$TEMP_IDX"
 
            # 3. Regular files  (type 'f')
-           (cd "${CURRENT_IMAGE_DIR}/${TREE}" && find . -type f -exec ls -is {} \;) | awk '{print $1 "|" $2 "|f|" substr($0, index($0, $3))}' >> "${TEMP_IDX}"
+           (cd "$CURRENT_IMAGE_DIR/${TREE}" && find . -type f -exec ls -is {} \;) | awk '{print $1 "|" $2 "|f|" substr($0, index($0, $3))}' >> "$TEMP_IDX"
    
            # Gzip and remove tmp file
-           gzip -c "${TEMP_IDX}" > "${CURRENT_IMAGE_DIR}/index.gz"
-           rm -f "${TEMP_IDX}"
+           gzip -c "$TEMP_IDX" > "$CURRENT_IMAGE_DIR/index.gz"
+           rm -f "$TEMP_IDX"
 
-           echo -e "\n------------------------------------------------" >> "${VAULT_LOG}"
-           echo "STATUS for ${VAULT_NAME}: SUCCESSFUL" >> "${VAULT_LOG}"
+           echo -e "\n------------------------------------------------" >> "$VAULT_LOG"
+           echo "STATUS: SUCCESSFUL" >> "$VAULT_LOG"
            # Update the central symlink in the manage/ directory to point to this run
-           rm -f "${LINK_MARKER}"
+           rm -f "$LINK_MARKER"
+#set -xv
+#                    ln -s "../../${VAULT_NAME}/$(basename "${CURRENT_IMAGE_DIR}")" "${LINK_MARKER}"
+#                    ls -alt "${LINK_MARKER}"
+#                    ls -alt ${LINK_MARKER}
+#                    ln -s "../../${VAULT_NAME}/$(basename ${CURRENT_IMAGE_DIR})" "${LINK_MARKER}"
+#                    ls -alt "${LINK_MARKER}"
+#                    ls -alt ${LINK_MARKER}
 # #                   ln -s "../../${VAULT_NAME}/$(basename \"${CURRENT_IMAGE_DIR}\")" "${LINK_MARKER}" so nicht, hat ein '"' beim naechsten ls , das uebernechste ist wieder ok
 #                    ls -alt "${LINK_MARKER}"
 #                    ls -alt ${LINK_MARKER}
+#set +xv
            ln -s "../../${VAULT_NAME}/$(basename "${CURRENT_IMAGE_DIR}")" "${LINK_MARKER}"
            touch "${NEW_TREE}" # Updates timestamp for the next sorting iteration
        else
-           echo "  ✗ ERROR while backing up vault ${VAULT_NAME}!"
-           echo -e "\n------------------------------------------------" >> "${VAULT_LOG}"
-           echo "STATUS: FAILED" >> "${VAULT_LOG}"
+           echo "  ✗ ERROR while backing up vault $VAULT_NAME!"
+           echo -e "\n------------------------------------------------" >> "$VAULT_LOG"
+           echo "STATUS: FAILED" >> "$VAULT_LOG"
            #echo "  Notice: Backup tree might be incomplete. Log kept inside directory for analysis."
            # Don't delete it; instead, mark it as incomplete for the next run. 
-           if [ -d "${NEW_TREE}" ]; then
-               mv "${NEW_TREE}" "${CURRENT_IMAGE_DIR}/${TREE}.${INCOMPLETE}"
+           if [ -d "$NEW_TREE" ]; then
+               mv "$NEW_TREE" "${CURRENT_IMAGE_DIR}/${TREE}.${INCOMPLETE}"
                echo "  Notice: Incomplete backup saved as '${TREE}.${INCOMPLETE}' for delta-analysis."
            fi
        fi
     fi 
     
     # END-TIMESTAMP (Logged directly inside the isolated rsync.log)
-    echo "End time: $(date '+%Y-%m-%d %H:%M:%S')" >> "${VAULT_LOG}"
-    if [ "${DRY_RUN}" = "0" ]; then 
-       echo "Log: "${VAULT_LOG}
-       ls -l ${VAULT_LOG}
-       tail -n 4 "${VAULT_LOG}"
-       #sed -ne "/Number of files:/,$ {p}" ${VAULT_LOG}
-       sed -ne "/Number of files:/ {p}" ${VAULT_LOG}
+    echo "End time: $(date '+%Y-%m-%d %H:%M:%S')" >> "$VAULT_LOG"
+    if [ "$DRY_RUN" = "0" ]; then 
+       echo "Log: "$VAULT_LOG
+       ls -l $VAULT_LOG
+       tail -n 4 "$VAULT_LOG"
+       #sed -ne "/Number of files:/,$ {p}" $VAULT_LOG
+       sed -ne "/Number of files:/ {p}" $VAULT_LOG
     else
         echo "------------------------------------------------"
         echo "  [Dry-Run] Simulation finished."
@@ -790,8 +813,8 @@ done
 echo ""
 # Cleanup environment variables after execution
 unset RSYNC_RSH
-echo "Deleting ${EXCLUDES_DIR}"
-rm -rf "${EXCLUDES_DIR}" 
+echo "Deleting $EXCLUDES_DIR"
+rm -rf "$EXCLUDES_DIR" 
 echo "=== BusyBack: All backups processed ==="
 trap '' EXIT INT TERM HUP
 echo "End of global backup:   $(date '+%Y-%m-%d %H:%M:%S')"
